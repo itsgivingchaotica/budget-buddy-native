@@ -1,4 +1,11 @@
-import { View, Image, StyleSheet, Platform, Button } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  Platform,
+  Button,
+  TouchableOpacity,
+} from "react-native";
 import React, { useEffect } from "react";
 import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
@@ -6,6 +13,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Link, useRouter } from "expo-router";
 import services from "@/utils/services";
+import { client } from "@/utils/KindeConfig";
 
 export default function HomeScreen() {
   useEffect(() => {
@@ -19,11 +27,28 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const checkUserAuth = async () => {
-    const result = await services.getData();
-    console.log("Result ", result);
-    if (result !== "true") {
+    const res = await services.getData("login");
+    // const userProfile = await services.getUserDetails();
+    // console.log(userProfile);
+    if (res !== "true") {
       // Redirect to login screen
       router.push("/login");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const res = await client.logout();
+      // console.log(res, " logged out");
+      if (res) {
+        // Assuming services.removeData is a function to clear session data
+        await services.clearAllData();
+        router.push("/login");
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
     }
   };
 
@@ -43,15 +68,14 @@ export default function HomeScreen() {
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: "cmd + d", android: "cmd + m" })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
+        <TouchableOpacity
+          className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 items-center"
+          onPress={handleLogout}
+        >
+          <ThemedText type="defaultSemiBold" className="text-[#1E90FF]">
+            Logout
+          </ThemedText>
+        </TouchableOpacity>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 2: Explore</ThemedText>
