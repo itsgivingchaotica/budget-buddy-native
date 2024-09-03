@@ -50,11 +50,11 @@ export default function ParallaxScrollView({
       <Animated.ScrollView ref={scrollRef} scrollEventThrottle={16}>
         <Animated.View
           style={headerAnimatedStyle}
-          className={`h-[375px] overflow-hidden bg-[${headerBackgroundColor[colorScheme]}]`}
+          className={`h-[275px] overflow-hidden bg-[${headerBackgroundColor[colorScheme]}]`}
         >
           {headerImage}
         </Animated.View>
-        <ThemedView className="flex-1 p-8 gap-4 h-[375px] w-full overflow-hidden ml-[0.5] rounded-3xl">
+        <ThemedView className="flex-1 h-[575px] p-8 gap-4 w-full overflow-hidden ml-[0.5] rounded-3xl">
           {children}
         </ThemedView>
       </Animated.ScrollView>

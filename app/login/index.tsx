@@ -3,8 +3,26 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import React from "react";
+import { client } from "@/utils/KindeConfig";
+import services from "@/utils/services";
+import { useRouter } from "expo-router";
 
 const LoginScreen = () => {
+  const router = useRouter();
+  const handleSignIn = async () => {
+    const token = await client.login();
+    if (token) {
+      await services.storeData("login", "true");
+      router.replace("/(tabs)");
+    }
+  };
+  const handleSignUp = async () => {
+    const token = await client.register();
+    if (token) {
+      await services.storeData("login", "true");
+      router.replace("/(tabs)");
+    }
+  };
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -15,26 +33,31 @@ const LoginScreen = () => {
         />
       }
     >
-      <ThemedView className="flex-row items-center gap-2 flex justify-center">
-        <ThemedText type="title">Welcome!</ThemedText>
-        {/* <HelloWave /> */}
-      </ThemedView>
-      <ThemedView className="gap-2 mb-2">
-        <ThemedText className="text-center">
-          The no-frills, no-fuss way to take control of your finances. Simple,
-          personal, and powerful budgeting right in your pocket.
-          {/* <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "} */}
-          <ThemedText type="defaultSemiBold">
-            {/* {Platform.select({ ios: "cmd + d", android: "cmd + m" })} */}
-          </ThemedText>{" "}
+      <View className="relative h-40">
+        <Image
+          source={require("@/assets/images/budget-buddy.png")}
+          className="absolute w-full h-full"
+        />
+      </View>
+      <ThemedView className="mb-2">
+        <TouchableOpacity
+          className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 items-center"
+          onPress={handleSignIn}
+        >
+          <ThemedText type="defaultSemiBold" className="text-white">
+            Sign In
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 items-center" onPress={handleSignUp}>
+          <ThemedText type="defaultSemiBold" className="text-[#1E90FF]">
+            Sign Up
+          </ThemedText>
+        </TouchableOpacity>
+        <ThemedText type="default" className="text-xs text-center">
+          By logging in or creating an account, you acknowledge and agree to our
+          Terms of Service and Privacy Policy, including any applicable
+          permissions required by the app.
         </ThemedText>
-        <TouchableOpacity className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 items-center">
-          <Text className="text-white font-bold">Sign In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 items-center">
-          <Text className="text-[#1E90FF] font-bold">Sign Up</Text>
-        </TouchableOpacity>
       </ThemedView>
     </ParallaxScrollView>
   );
