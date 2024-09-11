@@ -58,7 +58,7 @@ export default function TabTwoScreen() {
         <ThemedText>
           Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText>{" "}
           to see how to load{" "}
-          <ThemedText style={{ fontFamily: "SuseVariable" }}>
+          <ThemedText style={{ fontFamily: "Suse-Variable" }}>
             custom fonts such as this one.
           </ThemedText>
         </ThemedText>
