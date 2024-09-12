@@ -16,17 +16,21 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SuseVariable: require("../assets/fonts/SUSE-VariableFont_wght.ttf"),
+  const [fontsLoaded, fontError] = useFonts({
+    "Suse-Variable": require("../assets/fonts/SUSE-VariableFont_wght.ttf"),
+    "Suse-Medium": require("../assets/fonts/SUSE-Medium.ttf"),
+    "Suse-Regular": require("../assets/fonts/SUSE-Regular.ttf"),
+    "Suse-Bold": require("../assets/fonts/SUSE-Bold.ttf"),
+    "Suse-Extra-Bold": require("../assets/fonts/SUSE-ExtraBold.ttf"),
   });
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -35,6 +39,46 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="new-budget"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "Create New Budget",
+          }}
+        />
+        <Stack.Screen
+          name="expenses"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "Expenses",
+          }}
+        />
+        <Stack.Screen
+          name="income"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "Income",
+          }}
+        />
+        <Stack.Screen
+          name="savings"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "Savings & Goals",
+          }}
+        />
+        <Stack.Screen
+          name="strategy"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "Budgeting Strategy",
+          }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
