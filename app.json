@@ -3,9 +3,6 @@
     "name": "bb-client",
     "slug": "bb-client",
     "version": "1.0.0",
-    "extra": {
-      "API_BASE_URL": "http://localhost:3000"
-    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "budget-buddy-scheme",
