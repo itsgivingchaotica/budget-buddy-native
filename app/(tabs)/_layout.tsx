@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
 import React from "react";
-
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -18,11 +19,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Budget",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "home" : "home-outline"}
+            <FontAwesome6
+              name={focused ? "money-bill-1" : "money-bill-1-wave"}
               color={color}
+              size={24}
             />
           ),
         }}
@@ -30,10 +32,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Budgets",
+          title: "Categories",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "code-slash" : "code-slash-outline"}
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "sort-bool-ascending-variant"
+                  : "sort-bool-descending-variant"
+              }
+              size={24}
               color={color}
             />
           ),
