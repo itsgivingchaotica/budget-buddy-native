@@ -20,9 +20,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import CircularChart from "@/components/CircularChart";
 import { useBudgetStore } from "@/store/budget";
 import GetStarted from "@/components/GetStarted";
-import CategoryList from "@/components/CategoryList";
+import { CategoryList } from "@/components/Categories/CategoryList";
+import Constants from "expo-constants";
+import Storybook from "../../.storybook";
 
-export default function HomeScreen() {
+function HomeScreen() {
   const { user, budgets, clearUser, currentBudget, createNewBudget } =
     useBudgetStore();
 
@@ -153,6 +155,10 @@ export default function HomeScreen() {
     // </ParallaxScrollView>
   );
 }
+
+export default Constants.expoConfig?.extra?.storybookEnabled
+  ? Storybook
+  : HomeScreen;
 
 const styles = StyleSheet.create({
   titleContainer: {
