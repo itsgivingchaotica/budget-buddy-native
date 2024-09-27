@@ -5,8 +5,8 @@ import { Category, CategoryTags } from "@/utils/types";
 export default function Expenses() {
   return (
     <View>
-      {CategoryTags[Category.EXPENSE].map((tag) => (
-        <Text key={tag}>{tag}</Text>
+      {CategoryTags[Category.EXPENSE].map((expense) => (
+        <Text key={expense}>{expense}</Text>
       ))}
     </View>
   );
