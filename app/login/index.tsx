@@ -23,6 +23,7 @@ const LoginScreen = () => {
       router.replace("/(tabs)");
     }
   };
+  
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}

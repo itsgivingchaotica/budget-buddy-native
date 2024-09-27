@@ -79,6 +79,14 @@ export default function RootLayout() {
             headerTitle: "Budgeting Strategy",
           }}
         />
+        <Stack.Screen
+          name="new-entry"
+          options={{
+            presentation: "modal",
+            headerShwn: true,
+            headerTitle: "New Entry",
+          }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

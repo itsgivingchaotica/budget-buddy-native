@@ -5,8 +5,8 @@ import { Category, CategoryTags } from "@/utils/types";
 export default function BudgetingStrategy() {
   return (
     <View>
-      {CategoryTags[Category.BUDGETING_STRATEGY].map((tag) => (
-        <Text key={tag}>{tag}</Text>
+      {CategoryTags[Category.BUDGETING_STRATEGY].map((strategy) => (
+        <Text key={strategy}>{strategy}</Text>
       ))}
     </View>
   );

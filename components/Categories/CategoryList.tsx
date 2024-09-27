@@ -20,7 +20,11 @@ import { useRouter } from "expo-router";
 //   BUDGETING_STRATEGY = "Budgeting Strategy",
 // }
 
-const CategoryList = () => {
+export type CategoryListProps = {
+  onPress: () => void;
+};
+
+export const CategoryList = ({ onPress }: CategoryListProps) => {
   const router = useRouter();
   const { setCategory } = useBudgetStore();
   const handleCategoryPress = (category: Category) => {
@@ -152,4 +156,3 @@ const styles = StyleSheet.create({
     fontFamily: "Suse-Bold",
   },
 });
-export default CategoryList;
