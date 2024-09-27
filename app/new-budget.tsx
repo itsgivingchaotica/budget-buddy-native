@@ -9,7 +9,7 @@ import {
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { Category } from "@/utils/types";
-import CategoryList from "@/components/CategoryList";
+import { CategoryList } from "@/components/Categories/CategoryList";
 import { useBudgetStore } from "@/store/budget";
 
 export default function CreateNewBudget() {
@@ -49,6 +49,8 @@ export default function CreateNewBudget() {
     >
       {selectedCategory && <Button title="Back" onPress={handleBack} />}
       <TextInput
+        value={budgetName}
+        onChangeText={setBudgetName}
         placeholder="Budget Name"
         style={{
           borderWidth: 1,
