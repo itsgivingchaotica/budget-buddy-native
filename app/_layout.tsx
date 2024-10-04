@@ -55,44 +55,9 @@ export default function RootLayout() {
           options={{
             headerShown: true,
             headerTitle: selectedCategory?.toUpperCase(),
-            // presentation: "modal",
-            // headerShwn: true,
-            // headerTitle: "Expenses",
             headerBackTitle: "Categories",
           }}
         />
-        {/* <Stack.Screen
-          name="income"
-          options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "Income",
-          }}
-        />
-        <Stack.Screen
-          name="savings"
-          options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "Savings & Goals",
-          }}
-        />
-        <Stack.Screen
-          name="strategy"
-          options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "Budgeting Strategy",
-          }}
-        /> */}
-        {/* <Stack.Screen
-          name="new-entry"
-          options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "New Entry",
-          }}
-        /> */}
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
