@@ -20,11 +20,6 @@ export default function CreateNewBudget() {
   const [savingsGoals, setSavingsGoals] = useState();
   const [strategy, setStrategy] = useState();
 
-  const handleBack = () => {
-    router.back();
-    setCategory(null);
-  };
-
   const handleSubmit = async () => {
     try {
       //   const response = await axios.post("/api/budget", {
@@ -47,7 +42,6 @@ export default function CreateNewBudget() {
         backgroundColor: "#f0f0f0",
       }}
     >
-      {selectedCategory && <Button title="Back" onPress={handleBack} />}
       <TextInput
         value={budgetName}
         onChangeText={setBudgetName}
