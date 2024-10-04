@@ -10,10 +10,10 @@ export enum Category {
 }
 
 export type Budget = {
-  id: number;
-  name: string;
-  created_at: Date;
-  updated_at: Date;
+  id: number | null;
+  name: string | null;
+  created_at: Date | null;
+  updated_at: Date | null;
 };
 
 export type Entry = {
