@@ -2,11 +2,11 @@ import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
 
-export const CategoryTag = ({ tag }: { tag: string }) => {
+export const CategoryTag: React.FC = ({ tag }: { tag: string }) => {
   const router = useRouter();
 
   const handleNavigate = () => {
-    router.push(`/new-entry?tag=${encodeURIComponent(tag)}`);
+    router.push(`/category/new-entry?tag=${encodeURIComponent(tag)}`);
   };
 
   return (
