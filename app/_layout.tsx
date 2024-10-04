@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useBudgetStore } from "@/store/budget";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,7 @@ export default function RootLayout() {
     "Suse-Bold": require("../assets/fonts/SUSE-Bold.ttf"),
     "Suse-Extra-Bold": require("../assets/fonts/SUSE-ExtraBold.ttf"),
   });
+  const { selectedCategory, currentBudget } = useBudgetStore();
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -42,20 +44,24 @@ export default function RootLayout() {
         <Stack.Screen
           name="new-budget"
           options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "Create New Budget",
+            headerShown: true,
+            headerTitle: currentBudget?.name || "New Budget",
+            headerBackTitle: "Back",
+            headerBackVisible: true,
           }}
         />
         <Stack.Screen
-          name="expenses"
+          name="category"
           options={{
-            presentation: "modal",
-            headerShwn: true,
-            headerTitle: "Expenses",
+            headerShown: true,
+            headerTitle: selectedCategory?.toUpperCase(),
+            // presentation: "modal",
+            // headerShwn: true,
+            // headerTitle: "Expenses",
+            headerBackTitle: "Categories",
           }}
         />
-        <Stack.Screen
+        {/* <Stack.Screen
           name="income"
           options={{
             presentation: "modal",
@@ -78,15 +84,15 @@ export default function RootLayout() {
             headerShwn: true,
             headerTitle: "Budgeting Strategy",
           }}
-        />
-        <Stack.Screen
+        /> */}
+        {/* <Stack.Screen
           name="new-entry"
           options={{
             presentation: "modal",
             headerShwn: true,
             headerTitle: "New Entry",
           }}
-        />
+        /> */}
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
