@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
 import { client } from "@/utils/KindeConfig";
-import Constants from "expo-constants";
 import { Budget, Category, CategoryTags, Entry, TagType } from "@/utils/types";
 
 interface BudgetState {
@@ -10,52 +9,66 @@ interface BudgetState {
     given_name: string;
     email: string;
     picture: string;
-    id?: number; // Integer user ID
+    id?: number;
   } | null;
   budgets: Budget[];
   currentBudget: Budget | null;
   selectedCategory: Category | null;
   tags: TagType[];
+  incomeTags: TagType[];
+  expenseTags: TagType[];
+  savingsTags: TagType[];
+  miscTags: TagType[];
+  strategyTags: TagType[];
   newEntries: { [key: string]: Entry[] };
   fetchUserData: () => Promise<void>;
   clearUser: () => void;
   setCategory: (category: Category) => void;
-  addEntry: (category: string, formData: Entry) => void;
+  addEntry: (
+    category: string,
+    formData: Entry,
+    categoryTagIndex: number
+  ) => void;
+  createNewBudget: (name: string) => Promise<void>;
+  beginNewBudget: () => Promise<void>;
+  setBudgetName: (name: string) => void;
 }
 
 const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export const useBudgetStore = create<BudgetState>((set, get) => ({
   user: null,
+  budgets: [], // Initialize budgets as an empty array
+  currentBudget: {
+    id: null,
+    name: null,
+    created_at: null,
+    updated_at: null,
+  },
   selectedCategory: null,
-  currentBudget: null,
   tags: [],
-  entries: {},
+  incomeTags: [],
+  expenseTags: [],
+  savingsTags: [],
+  miscTags: [],
+  strategyTags: [],
   newEntries: {},
-  fetchUserData: async () => {
-    const { user } = get(); // Access the current state
 
-    if (user) {
-      // // If user is already in the state, do nothing
-      // console.log("User already exists in state:", user);
-      // GET THE UPDATED BUDGET
-      return;
-    }
+  fetchUserData: async () => {
+    const { user } = get();
+    if (user) return; // If user is already in the state, skip fetching
 
     try {
       const response = await client.getUserDetails();
       const { family_name, given_name, email, picture } = response;
-      console.log(response);
 
-      // Check if the user already exists on the server
       const budgetUser = await axios.get(`${apiUrl}/users/show_by_email`, {
-        params: { email }, // Filter by email
+        params: { email },
       });
 
       const userData = budgetUser.data;
 
       if (userData.length === 0) {
-        // If user does not exist on the server, create a new one
         const postResponse = await axios.post(`${apiUrl}/users`, {
           first_name: given_name,
           last_name: family_name,
@@ -64,37 +77,29 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
         });
 
         if (postResponse.status === 201) {
-          // Assuming Rails response includes user ID as integer
           const {
             id,
             given_name: first_name,
             family_name: last_name,
             email,
             picture,
-          } = postResponse.data; // Renaming `id` to `userId` if needed
+          } = postResponse.data;
           set({
             user: {
               last_name,
               first_name,
               email,
               id,
-              picture, // Store the integer user ID
+              picture,
             },
           });
-          console.log("User created successfully:", postResponse.data);
-        } else {
-          console.log("Unexpected response status:", postResponse.status);
         }
       } else {
-        // If user exists, use the existing user data
         const userId = userData.id;
 
-        // Fetch budgets associated with the user
         const budgetsResponse = await axios.get(`${apiUrl}/budgets`, {
-          params: { user_id: userId }, // Pass user ID to filter budgets
+          params: { user_id: userId },
         });
-
-        const budgets = budgetsResponse.data;
 
         set({
           user: {
@@ -102,13 +107,10 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
             given_name: userData.first_name,
             email: userData.email,
             id: userData.id,
-            picture: userData.picture, // Use the integer user ID from the server
+            picture: userData.picture,
           },
-          budgets: budgets,
+          budgets: budgetsResponse.data,
         });
-        console.log("User already exists on the server.");
-        console.log(get().user);
-        console.log(get().budgets);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -117,21 +119,60 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
 
   clearUser: () => set({ user: null }),
 
-  //switch between views
   setCategory: (category: Category) => {
-    set({
+    set((state) => ({
+      ...state,
       selectedCategory: category,
-      tags: CategoryTags[category] || [], // Update tags based on the selected category
-    });
+      tags: CategoryTags[category] || [], // Safely update the tags based on the selected category
+    }));
   },
-  //build entries to push to the server for an exisitng or new budget
+
+  setBudgetName: (name: string) => {
+    set((state) => ({
+      currentBudget: { ...state.currentBudget, name }, // Update the current budget's name
+    }));
+  },
+
+  beginNewBudget: async () => {
+    try {
+      // Fetch default tags from the backend
+      const response = await axios.get(`${apiUrl}/tags/default_tags`, {
+        params: { user_id: 1 },
+      });
+
+      const defaultTags = response.data;
+
+      // Set the tags based on the fetched default tags
+      const incomeTags = defaultTags.filter((tag) => tag.category_id === 6);
+      const expenseTags = defaultTags.filter((tag) => tag.category_id === 7);
+      const savingsTags = defaultTags.filter((tag) => tag.category_id === 8);
+      const miscTags = defaultTags.filter((tag) => tag.category_id === 9);
+      const strategyTags = defaultTags.filter((tag) => tag.category_id === 10);
+      console.log(defaultTags, " the default tags");
+      console.log(incomeTags, " the income tags");
+
+      // Update Zustand state with fetched tags
+      set((state) => ({
+        tags: defaultTags, // Load default tags into Zustand state
+        incomeTags: incomeTags, // Set incomeTags to the fetched data
+        expenseTags: expenseTags, // Set expenseTags to the fetched data
+        savingsTags: savingsTags, // Set savingsTags to the fetched data
+        miscTags: miscTags, // Set miscTags to the fetched data
+        strategyTags: strategyTags, // Set strategyTags to the fetched data
+      }));
+    } catch (error) {
+      console.error("Error fetching default tags:", error);
+    }
+  },
+
   addEntry: (category: string, formData: Entry, categoryTagIndex: number) => {
     const { newEntries } = get();
     const newEntry: Entry = {
       ...formData,
       category,
-      categoryTag: CategoryTags[category][categoryTagIndex],
+      categoryTag: CategoryTags[category]?.[categoryTagIndex] || "default", // Safely accessing category tags
     };
+
     set({
       newEntries: {
         ...newEntries,
@@ -139,12 +180,14 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       },
     });
   },
+
   createNewBudget: async (name: string) => {
-    const { user } = get();
+    const { user, newEntries } = get();
     if (!user) {
       console.error("User is not authenticated.");
       return;
     }
+
     try {
       const response = await axios.post(`${apiUrl}/budgets`, {
         user_id: user.id,
@@ -158,7 +201,6 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
           budgets: [...state.budgets, newBudget],
           currentBudget: newBudget,
         }));
-        console.log("New budget created:", newBudget);
       } else {
         console.error("Unexpected response status:", response.status);
       }
