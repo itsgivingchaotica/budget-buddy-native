@@ -23,7 +23,7 @@ const LoginScreen = () => {
       router.replace("/(tabs)");
     }
   };
-  
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -49,7 +49,10 @@ const LoginScreen = () => {
             Sign In
           </ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 items-center" onPress={handleSignUp}>
+        <TouchableOpacity
+          className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 items-center"
+          onPress={handleSignUp}
+        >
           <ThemedText type="defaultSemiBold" className="text-[#1E90FF]">
             Sign Up
           </ThemedText>

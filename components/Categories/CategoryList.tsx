@@ -29,19 +29,9 @@ export const CategoryList = ({ onPress }: CategoryListProps) => {
   const { setCategory } = useBudgetStore();
   const handleCategoryPress = (category: Category) => {
     setCategory(category);
-
-    const categoryRoutes = {
-      [Category.INCOME]: "/income",
-      [Category.EXPENSE]: "/expenses",
-      [Category.SAVINGS_GOALS]: "/savings",
-      [Category.BUDGETING_STRATEGY]: "/strategy",
-    };
-
-    const route = categoryRoutes[category];
-    if (route) {
-      router.push(route);
-    }
+    router.push(`/category`);
   };
+
   return (
     <ScrollView contentContainerStyle={styles.grid}>
       <TouchableOpacity
