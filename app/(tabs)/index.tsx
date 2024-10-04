@@ -25,7 +25,7 @@ import Constants from "expo-constants";
 import Storybook from "../../.storybook";
 
 function HomeScreen() {
-  const { user, budgets, clearUser, currentBudget, createNewBudget } =
+  const { user, budgets, clearUser, currentBudget, beginNewBudget, tags } =
     useBudgetStore();
 
   useEffect(() => {
@@ -63,6 +63,11 @@ function HomeScreen() {
     }
   };
 
+  const handleBeginNewBudget = () => {
+    beginNewBudget();
+    router.push("/new-budget");
+  };
+
   return (
     <View className="flex-1">
       <LinearGradient
@@ -82,15 +87,16 @@ function HomeScreen() {
         {budgets?.length === 0 ? <GetStarted /> : <CircularChart />}
         <View className="items-center">
           {budgets?.length === 0 ? (
-            <TouchableOpacity className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 w-full">
-              <Link href={"/new-budget"}>
-                <ThemedText
-                  type="defaultSemiBold"
-                  className="text-white text-center"
-                >
-                  Create New Budget
-                </ThemedText>
-              </Link>
+            <TouchableOpacity
+              className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 w-full"
+              onPress={handleBeginNewBudget}
+            >
+              <ThemedText
+                type="defaultSemiBold"
+                className="text-white text-center"
+              >
+                Create New Budget
+              </ThemedText>
             </TouchableOpacity>
           ) : (
             // </View>
