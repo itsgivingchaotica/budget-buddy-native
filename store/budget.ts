@@ -143,8 +143,8 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       const defaultTags = response.data;
 
       // Set the tags based on the fetched default tags
-      const incomeTags = defaultTags.filter((tag) => tag.category_id === 6);
-      const expenseTags = defaultTags.filter((tag) => tag.category_id === 7);
+      const expenseTags = defaultTags.filter((tag) => tag.category_id === 6);
+      const incomeTags = defaultTags.filter((tag) => tag.category_id === 7);
       const savingsTags = defaultTags.filter((tag) => tag.category_id === 8);
       const miscTags = defaultTags.filter((tag) => tag.category_id === 9);
       const strategyTags = defaultTags.filter((tag) => tag.category_id === 10);
