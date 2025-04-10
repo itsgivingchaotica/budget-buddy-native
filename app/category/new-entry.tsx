@@ -9,18 +9,22 @@ import {
   View,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import DatePicker from "@/components/DatePicker";
 
 export default function CreateNewEntry() {
   const router = useRouter(); // Access the router to navigate
   const { tag } = useLocalSearchParams(); // Retrieve the tag from search params
   const [title, setTitle] = useState<string>("");
   const [amount, setAmount] = useState<string>("0.00");
-  const [interval, setInterval] = useState<string>("Weekly");
+  const [interval, setInterval] = useState<string>("");
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [customIntervalNumber, setCustomIntervalNumber] = useState<number>(1);
   const [customIntervalUnit, setCustomIntervalUnit] = useState<string>("week");
+  const [isCustom, setIsCustom] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [futureDate, setFutureDate] = useState<Date | null>(null);
 
   const intervalUnits = ["day", "week", "month", "year"];
 
@@ -32,8 +36,12 @@ export default function CreateNewEntry() {
     "Custom...",
   ];
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     router.back(); // Go back to the previous screen or close the modal
+  };
+
+  const handleSave = (): void => {
+    router.back();
   };
 
   const formatAmount = (input: string) => {
@@ -53,14 +61,13 @@ export default function CreateNewEntry() {
     setAmount(formatted);
   };
 
-  const handleDone = () => {
-    if (interval === "Custom...") {
+  const handleDone = (): void => {
+    if (isCustom) {
       // Proceed to custom interval step
-      setInterval(
-        `${customIntervalNumber} ${customIntervalUnit}${
-          customIntervalNumber > 1 ? "s" : ""
-        }`
-      );
+      const customValue = `${customIntervalNumber} ${customIntervalUnit}${
+        customIntervalNumber > 1 ? "s" : ""
+      }`;
+      setInterval(customValue);
     }
     setModalVisible(false); // Close the modal
   };
@@ -107,6 +114,30 @@ export default function CreateNewEntry() {
       width: "100%",
       justifyContent: "space-between",
     },
+    buttonContainer: {
+      flexDirection: "row", // Align buttons horizontally
+      width: "100%", // Ensure the container takes up the full width
+      paddingHorizontal: 10, // Add some padding for spacing
+    },
+    redButton: {
+      backgroundColor: "red", // Red background
+      padding: 10,
+      borderRadius: 5,
+      flex: 1, // Ensure the button takes up half of the container
+      marginRight: 5, // Add space between the two buttons
+    },
+    greenButton: {
+      backgroundColor: "green", // Green background
+      padding: 10,
+      borderRadius: 5,
+      flex: 1, // Ensure the button takes up half of the container
+      marginLeft: 5, // Add space between the two buttons
+    },
+    buttonText: {
+      color: "white",
+      fontSize: 16,
+      textAlign: "center", // Center the text inside the button
+    },
   });
 
   return (
@@ -133,14 +164,43 @@ export default function CreateNewEntry() {
           onChangeText={handleAmountChange}
           maxLength={10}
         />
-
-        <Text style={styles.label}>Repeat Every</Text>
+        <DatePicker
+          selectedDate={startDate}
+          onDateSelected={setStartDate}
+          label="Select start date"
+        />
         <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Text style={styles.intervalText}>{interval}</Text>
+          <Text>
+            Repeat
+            {isCustom
+              ? ` Every\n${customIntervalNumber} ${customIntervalUnit}${
+                  customIntervalNumber > 1 ? "s" : ""
+                }`
+              : ` Every\n${interval}`}
+          </Text>
+        </TouchableOpacity>
+        <Text>
+          {futureDate ? `Until\n${futureDate.toLocaleDateString()}` : ""}
+        </Text>
+        <TouchableOpacity>
+          <Text>Done</Text>
         </TouchableOpacity>
       </ScrollView>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.redButton]} // Apply red button styles
+          onPress={handleClose}
+        >
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
 
-      <Button title="Close" onPress={handleClose} />
+        <TouchableOpacity
+          style={[styles.greenButton]} // Apply green button styles
+          onPress={handleSave}
+        >
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Modal for Picker */}
       {/* Modal for Picker */}
@@ -190,7 +250,10 @@ export default function CreateNewEntry() {
               // Otherwise show the standard intervals picker
               <Picker
                 selectedValue={interval}
-                onValueChange={(itemValue) => setInterval(itemValue)}
+                onValueChange={(itemValue) => {
+                  setInterval(itemValue); // <- Always set this
+                  setIsCustom(itemValue === "Custom...");
+                }}
                 style={styles.picker}
               >
                 {intervals.map((item) => (
@@ -198,6 +261,12 @@ export default function CreateNewEntry() {
                 ))}
               </Picker>
             )}
+            <Text style={{ fontSize: 16 }}>Until:</Text>
+            <DatePicker
+              selectedDate={futureDate}
+              onDateSelected={setFutureDate}
+              label="Select end date"
+            />
             <Button title="Done" onPress={() => setModalVisible(false)} />
           </View>
         </View>
