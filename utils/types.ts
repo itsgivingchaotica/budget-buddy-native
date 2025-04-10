@@ -19,7 +19,7 @@ export type Budget = {
 export type Entry = {
   start_date: string;
   amount: string;
-  description: TagType;
+  description: string;
   frequency: string | null;
   custom_frequency_days: string | null;
   frequency_number: number;
