@@ -2,6 +2,8 @@ import {
   View,
   Text,
   Button,
+  ScrollView,
+  StyleSheet,
   TextInput,
   Touchable,
   TouchableOpacity,
@@ -32,6 +34,15 @@ export default function CreateNewBudget() {
     }
   };
 
+  const styles = StyleSheet.create({
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      flex: 1,
+    },
+  });
+
   return (
     <View
       style={{
@@ -55,7 +66,9 @@ export default function CreateNewBudget() {
           width: "100%",
         }}
       />
-      <CategoryList />
+      <ScrollView contentContainerStyle={styles.grid}>
+        <CategoryList />
+      </ScrollView>
       <TouchableOpacity>
         <Text>Finish</Text>
       </TouchableOpacity>
