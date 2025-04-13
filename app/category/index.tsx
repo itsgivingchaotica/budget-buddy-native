@@ -43,8 +43,15 @@ export default function CategoryComponent() {
   return (
     <ScrollView>
       {tagsForSelectedCategory.map((tag) => {
-        console.log("Rendering tag:", tag); // Debugging
-        return <CategoryTag key={tag.id} tag={tag.name} />;
+        console.log("Rendering tag:", tag.category_id); // Debugging
+        return (
+          <CategoryTag
+            key={tag.id}
+            tagId={tag.id}
+            categoryId={tag.category_id}
+            tagName={tag.name}
+          />
+        );
       })}
     </ScrollView>
   );
