@@ -33,7 +33,7 @@ export const CategoryList = ({ onPress }: CategoryListProps) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.grid}>
+    <View style={styles.grid}>
       <TouchableOpacity
         style={styles.container}
         onPress={() => handleCategoryPress(Category.INCOME)}
@@ -106,7 +106,7 @@ export const CategoryList = ({ onPress }: CategoryListProps) => {
           </Text>
         </LinearGradient>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -115,11 +115,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    width: "100%",
   },
   container: {
     marginTop: 10,
     backgroundColor: "white",
-    height: 200,
+    height: 180,
     borderRadius: 15,
     elevation: 1,
     justifyContent: "center",
