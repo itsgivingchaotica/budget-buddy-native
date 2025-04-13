@@ -6,6 +6,7 @@ import {
   Button,
   Text,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import React, { useEffect } from "react";
 import { HelloWave } from "@/components/HelloWave";
@@ -69,7 +70,7 @@ function HomeScreen() {
   };
 
   return (
-    <View className="flex-1">
+    <ScrollView className="flex-1">
       <LinearGradient
         colors={["#16a34a", "#22c55e", "#4ade80"]}
         style={{
@@ -87,35 +88,54 @@ function HomeScreen() {
         {budgets?.length === 0 ? <GetStarted /> : <CircularChart />}
         <View className="items-center">
           {budgets?.length === 0 ? (
-            <TouchableOpacity
-              className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 w-full"
-              onPress={handleBeginNewBudget}
-            >
-              <ThemedText
-                type="defaultSemiBold"
-                className="text-white text-center"
+            <View>
+              <TouchableOpacity
+                className="bg-[#1E90FF] py-2 px-5 rounded-md my-1 w-full"
+                onPress={handleBeginNewBudget}
               >
-                Create New Budget
-              </ThemedText>
-            </TouchableOpacity>
+                <ThemedText
+                  type="defaultSemiBold"
+                  className="text-white text-center"
+                >
+                  Create New Budget
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 w-full"
+                onPress={handleLogout}
+              >
+                <ThemedText
+                  type="defaultSemiBold"
+                  className="text-[#1E90FF] text-center"
+                >
+                  Logout
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           ) : (
-            // </View>
-            <CategoryList />
+            // <View className="items-center flex-1">
+            <View className="w-full">
+              <View>
+                <CategoryList />
+              </View>
+              <View>
+                <TouchableOpacity
+                  className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 w-full"
+                  onPress={handleLogout}
+                >
+                  <ThemedText
+                    type="defaultSemiBold"
+                    className="text-[#1E90FF] text-center"
+                  >
+                    Logout
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
-          <TouchableOpacity
-            className="py-2 px-5 border-[#1E90FF] border-2 rounded-md my-1 w-full"
-            onPress={handleLogout}
-          >
-            <ThemedText
-              type="defaultSemiBold"
-              className="text-[#1E90FF] text-center"
-            >
-              Logout
-            </ThemedText>
-          </TouchableOpacity>
         </View>
       </LinearGradient>
-    </View>
+    </ScrollView>
     // <ParallaxScrollView
     //   headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     //   headerImage={
