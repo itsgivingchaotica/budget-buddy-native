@@ -36,6 +36,15 @@ export const DefaultTags = {
   completed: "Completed",
   pending: "Pending",
 } as const;
+
+export const CategoryIdMap: Record<Category, number> = {
+  [Category.EXPENSE]: 6,
+  [Category.INCOME]: 7,
+  [Category.SAVINGS_GOALS]: 8,
+  [Category.MISCELLANEOUS]: 9,
+  [Category.BUDGETING_STRATEGY]: 10,
+};
+
 // Define tags for each category
 export const CategoryTags: Record<Category, string[]> = {
   [Category.EXPENSE]: [

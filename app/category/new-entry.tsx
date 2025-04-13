@@ -8,14 +8,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Category } from "@/utils/types";
 import { Picker } from "@react-native-picker/picker";
 import React, { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import DatePicker from "@/components/DatePicker";
+import { useBudgetStore } from "@/store/budget";
+import * as Linking from "expo-linking";
+import { CategoryIdMap } from "@/utils/types";
 
 export default function CreateNewEntry() {
   const router = useRouter(); // Access the router to navigate
-  const { tag } = useLocalSearchParams(); // Retrieve the tag from search params
+  const { tagId, tagName } = useLocalSearchParams(); // Retrieve the tag from search params
   const [title, setTitle] = useState<string>("");
   const [amount, setAmount] = useState<string>("0.00");
   const [interval, setInterval] = useState<string>("");
@@ -25,6 +29,7 @@ export default function CreateNewEntry() {
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [futureDate, setFutureDate] = useState<Date | null>(null);
+  const { selectedCategory, addEntry } = useBudgetStore();
 
   const intervalUnits = ["day", "week", "month", "year"];
 
@@ -40,8 +45,28 @@ export default function CreateNewEntry() {
     router.back(); // Go back to the previous screen or close the modal
   };
 
-  const handleSave = (): void => {
-    router.back();
+  const handleSave = async () => {
+    if (!selectedCategory || !startDate) return;
+
+    const entryData = {
+      description: title,
+      amount: parseFloat(amount.replace(/[^0-9.-]+/g, "")),
+      start_date: startDate,
+      frequency: isCustom
+        ? `${customIntervalNumber} ${customIntervalUnit}${
+            customIntervalNumber > 1 ? "s" : ""
+          }`
+        : interval,
+      custom_frequency_days: isCustom ? customIntervalDays : null,
+      frequency_number: isCustom ? customIntervalNumber : 0,
+      end_date: futureDate,
+    };
+
+    console.log("Selected Category:", selectedCategory);
+    console.log("Entry Data:", entryData);
+    await addEntry(entryData, tagId); // Assuming index = 0 or pass the correct one
+
+    router.back(); // Navigate back
   };
 
   const formatAmount = (input: string) => {
@@ -150,7 +175,7 @@ export default function CreateNewEntry() {
       }}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <Text style={{ fontSize: 24 }}>Add New {tag}</Text>
+        <Text style={{ fontSize: 24 }}>Add New {tagName}</Text>
         <TextInput
           style={styles.input}
           onChangeText={setTitle}
