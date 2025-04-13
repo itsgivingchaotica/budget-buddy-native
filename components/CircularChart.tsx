@@ -46,7 +46,7 @@ const CircularChart = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    marginTop: 8,
     backgroundColor: "white",
     padding: 20,
     borderRadius: 15,
