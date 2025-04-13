@@ -1,7 +1,14 @@
 import { create } from "zustand";
 import axios from "axios";
 import { client } from "@/utils/KindeConfig";
-import { Budget, Category, CategoryTags, Entry, TagType } from "@/utils/types";
+import {
+  Budget,
+  Category,
+  CategoryTags,
+  Entry,
+  TagType,
+  CategoryIdMap,
+} from "@/utils/types";
 
 interface BudgetState {
   user: {
@@ -20,13 +27,13 @@ interface BudgetState {
   savingsTags: TagType[];
   miscTags: TagType[];
   strategyTags: TagType[];
-  newEntries: { [key: string]: Entry[] };
+  entries: { [key: string]: Entry[] };
   fetchUserData: () => Promise<void>;
   clearUser: () => void;
   setCategory: (category: Category) => void;
   addEntry: (
     category: string,
-    formData: Entry,
+    entryData: Entry,
     categoryTagIndex: number
   ) => void;
   createNewBudget: (name: string) => Promise<void>;
@@ -52,7 +59,7 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
   savingsTags: [],
   miscTags: [],
   strategyTags: [],
-  newEntries: {},
+  entries: {},
 
   fetchUserData: async () => {
     const { user } = get();
@@ -67,6 +74,8 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       });
 
       const userData = budgetUser.data;
+
+      console.log(userData, " the userData");
 
       if (userData.length === 0) {
         const postResponse = await axios.post(`${apiUrl}/users`, {
@@ -101,6 +110,11 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
           params: { user_id: userId },
         });
 
+        const sortedBudgets = budgetsResponse.data.sort(
+          (a: Budget, b: Budget) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
         set({
           user: {
             family_name: userData.last_name,
@@ -110,6 +124,7 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
             picture: userData.picture,
           },
           budgets: budgetsResponse.data,
+          currentBudget: sortedBudgets[0],
         });
       }
     } catch (error) {
@@ -165,34 +180,92 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
     }
   },
 
-  addEntry: (category: string, formData: Entry, categoryTagIndex: number) => {
-    const { newEntries } = get();
-    const newEntry: Entry = {
-      ...formData,
-      category,
-      categoryTag: CategoryTags[category]?.[categoryTagIndex] || "default", // Safely accessing category tags
-    };
-
-    set({
-      newEntries: {
-        ...newEntries,
-        [category]: [...(newEntries[category] || []), newEntry],
-      },
-    });
-  },
-
-  createNewBudget: async (name: string) => {
-    const { user, newEntries } = get();
+  addEntry: async (entryData: Entry, tagId: number | null) => {
+    const { entries, user, currentBudget, selectedCategory } = get();
+    console.log(entryData, " is the entry data");
+    console.log(selectedCategory, " is the category");
+    console.log(tagId, " is the tag id");
     if (!user) {
       console.error("User is not authenticated.");
       return;
     }
 
+    let budget = currentBudget;
+
+    console.log(budget, " the current budget from addEntry");
+    if (!budget || !budget.id) {
+      const defaultBudgetName = "";
+      const newBudget = await get().createNewBudget(defaultBudgetName);
+      if (!newBudget) {
+        console.error("Failed to create new budget. Aborting entry creation.");
+        return;
+      }
+      budget = newBudget;
+    }
+
+    // Handle case where tagId is missing (null or undefined)
+    if (tagId === null || tagId === undefined) {
+      console.log("No tagId provided. Creating new entry without a tag.");
+    }
+
+    const newEntryPayload = {
+      budget_id: budget.id,
+      start_date: entryData.start_date,
+      amount: entryData.amount,
+      description: entryData.description,
+      frequency: entryData.frequency,
+      custom_frequency_days: entryData.custom_frequency_days,
+      category_id: CategoryIdMap[selectedCategory],
+      frequency_number: entryData.frequency_number,
+      end_date: entryData.end_date,
+      tag_ids: [tagId], // matching join table for entries_tags
+    };
+
+    try {
+      const response = await axios.post(`${apiUrl}/entries`, {
+        entry: newEntryPayload,
+      });
+
+      if (response.status === 201) {
+        const savedEntry = response.data;
+
+        // Fetch the updated budget to update the local state
+        const updatedBudgetRes = await axios.get(
+          `${apiUrl}/budgets/${budget.id}`
+        );
+        const updatedBudget = updatedBudgetRes.data;
+
+        // Update local store
+        set({
+          entries: {
+            ...entries,
+            [categoryId]: [...(entries[categoryId] || []), savedEntry],
+          },
+          currentBudget: updatedBudget,
+        });
+      } else {
+        console.error(
+          "Unexpected response status while saving entry:",
+          response.status
+        );
+      }
+    } catch (error) {
+      console.error("Error saving entry:", error);
+    }
+  },
+  createNewBudget: async (name: string) => {
+    const { user } = get();
+    if (!user) {
+      console.error("User is not authenticated.");
+      return null;
+    }
+
     try {
       const response = await axios.post(`${apiUrl}/budgets`, {
-        user_id: user.id,
-        name,
-        newEntries,
+        budget: {
+          user_id: user.id,
+          name,
+        },
       });
 
       if (response.status === 201) {
@@ -201,11 +274,14 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
           budgets: [...state.budgets, newBudget],
           currentBudget: newBudget,
         }));
+        return newBudget;
       } else {
         console.error("Unexpected response status:", response.status);
+        return null;
       }
     } catch (error) {
       console.error("Error creating new budget:", error);
+      return null;
     }
   },
 }));
