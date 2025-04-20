@@ -22,11 +22,11 @@ export type Entry = {
   description: string;
   frequency: string | null;
   custom_frequency_days: string | null;
-  frequency_number: number;
+  frequency_number: number | null;
   end_date: string | null;
   budget_id: number | null;
-  category: Category;
-  categoryTag: TagType;
+  category: Category | null;
+  categoryTag: TagType | null;
 };
 
 // Define default tags
