@@ -27,8 +27,9 @@ export type CategoryListProps = {
 export const CategoryList = ({ onPress }: CategoryListProps) => {
   const router = useRouter();
   const { setCategory } = useBudgetStore();
-  const handleCategoryPress = (category: Category) => {
-    setCategory(category);
+  const handleCategoryPress = async (category: Category) => {
+    await setCategory(category);
+    console.log(category, "the selected category");
     router.push(`/category`);
   };
 
