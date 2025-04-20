@@ -1,6 +1,8 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import axios from "axios";
 import { client } from "@/utils/KindeConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Budget,
   Category,
@@ -29,259 +31,404 @@ interface BudgetState {
   strategyTags: TagType[];
   entries: { [key: string]: Entry[] };
   fetchUserData: () => Promise<void>;
+  fetchCategoryEntries: (
+    budget_id: number,
+    category_id: number
+  ) => Promise<void>;
   clearUser: () => void;
   setCategory: (category: Category) => void;
-  addEntry: (
-    category: string,
-    entryData: Entry,
-    categoryTagIndex: number
-  ) => void;
-  createNewBudget: (name: string) => Promise<void>;
+  addEntry: (entryData: Entry, tagId: number | null) => Promise<void>;
+  createNewBudget: (name: string) => Promise<Budget | void>;
   beginNewBudget: () => Promise<void>;
   setBudgetName: (name: string) => void;
 }
 
 const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-export const useBudgetStore = create<BudgetState>((set, get) => ({
-  user: null,
-  budgets: [], // Initialize budgets as an empty array
-  currentBudget: {
-    id: null,
-    name: null,
-    created_at: null,
-    updated_at: null,
-  },
-  selectedCategory: null,
-  tags: [],
-  incomeTags: [],
-  expenseTags: [],
-  savingsTags: [],
-  miscTags: [],
-  strategyTags: [],
-  entries: {},
+export const useBudgetStore = create<BudgetState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      budgets: [],
+      currentBudget: {
+        id: null,
+        name: null,
+        created_at: null,
+        updated_at: null,
+      },
+      selectedCategory: null,
+      tags: [],
+      incomeTags: [],
+      expenseTags: [],
+      savingsTags: [],
+      miscTags: [],
+      strategyTags: [],
+      entries: {},
 
-  fetchUserData: async () => {
-    const { user } = get();
-    if (user) return; // If user is already in the state, skip fetching
+      fetchUserData: async () => {
+        const { user, incomeTags, tags, entries, selectedCategory } = get();
+        let category;
+        console.log("selected CATEGORY: ", selectedCategory);
 
-    try {
-      const response = await client.getUserDetails();
-      const { family_name, given_name, email, picture } = response;
-
-      const budgetUser = await axios.get(`${apiUrl}/users/show_by_email`, {
-        params: { email },
-      });
-
-      const userData = budgetUser.data;
-
-      console.log(userData, " the userData");
-
-      if (userData.length === 0) {
-        const postResponse = await axios.post(`${apiUrl}/users`, {
-          first_name: given_name,
-          last_name: family_name,
-          email: email,
-          picture: picture,
-        });
-
-        if (postResponse.status === 201) {
-          const {
-            id,
-            given_name: first_name,
-            family_name: last_name,
-            email,
-            picture,
-          } = postResponse.data;
-          set({
-            user: {
-              last_name,
-              first_name,
-              email,
-              id,
-              picture,
-            },
-          });
+        if (Object.keys(entries).length === 0) {
+          console.log("entries is empty");
+          const entriesResponse = await axios.get(
+            `${apiUrl}/entries/entries_by_budget_with_default_categories`,
+            {
+              params: {
+                budget_id: get().currentBudget?.id,
+                category_id: CategoryIdMap[selectedCategory],
+              },
+            }
+          );
+          console.log(
+            entriesResponse.data,
+            " the entries response from fetchUserData"
+          );
         }
-      } else {
-        const userId = userData.id;
+        if (user && incomeTags?.length && tags?.length) {
+          console.log("user data already exists");
+          return;
+        } else {
+          console.log("tags state not saved, fetching user data");
+        }
+        try {
+          const response = await client.getUserDetails();
+          const { family_name, given_name, email, picture } = response;
 
-        const budgetsResponse = await axios.get(`${apiUrl}/budgets`, {
-          params: { user_id: userId },
-        });
+          const budgetUser = await axios.get(`${apiUrl}/users/show_by_email`, {
+            params: { email },
+          });
 
-        const sortedBudgets = budgetsResponse.data.sort(
-          (a: Budget, b: Budget) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          const userData = budgetUser.data;
+
+          if (userData.length === 0) {
+            const postResponse = await axios.post(`${apiUrl}/users`, {
+              first_name: given_name,
+              last_name: family_name,
+              email,
+              picture,
+            });
+
+            if (postResponse.status === 201) {
+              const {
+                id,
+                given_name: first_name,
+                family_name: last_name,
+                email,
+                picture,
+              } = postResponse.data;
+
+              set({
+                user: {
+                  last_name,
+                  first_name,
+                  email,
+                  id,
+                  picture,
+                },
+              });
+            }
+          } else {
+            const userId = userData.id;
+
+            const budgetsResponse = await axios.get(`${apiUrl}/budgets`, {
+              params: { user_id: userId },
+            });
+
+            const sortedBudgets = budgetsResponse.data.sort(
+              (a: Budget, b: Budget) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            );
+
+            const response = await axios.get(`${apiUrl}/tags/default_tags`, {
+              params: { user_id: 1 },
+            });
+
+            const defaultTags = response.data;
+
+            const expenseTags = defaultTags.filter(
+              (tag) => tag.category_id === 6
+            );
+            const incomeTags = defaultTags.filter(
+              (tag) => tag.category_id === 7
+            );
+            const savingsTags = defaultTags.filter(
+              (tag) => tag.category_id === 8
+            );
+            const miscTags = defaultTags.filter((tag) => tag.category_id === 9);
+            const strategyTags = defaultTags.filter(
+              (tag) => tag.category_id === 10
+            );
+
+            set({
+              tags: defaultTags,
+              incomeTags,
+              expenseTags,
+              savingsTags,
+              miscTags,
+              strategyTags,
+              user: {
+                family_name: userData.last_name,
+                given_name: userData.first_name,
+                email: userData.email,
+                id: userData.id,
+                picture: userData.picture,
+              },
+              budgets: budgetsResponse.data,
+              currentBudget: sortedBudgets[0],
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      },
+
+      clearUser: () => set({ user: null }),
+
+      fetchCategoryEntries: async (category_id: number) => {
+        const entriesResponse = await axios.get(
+          `${apiUrl}/entries/entries_by_budget_with_default_categories`,
+          {
+            params: {
+              budget_id: get().currentBudget?.id,
+              category_id: category_id,
+            },
+          }
+        );
+        console.log(
+          "THE ENTRIES FROM FETCH CATEGORy ENTRIES",
+          entriesResponse.data
         );
 
-        set({
-          user: {
-            family_name: userData.last_name,
-            given_name: userData.first_name,
-            email: userData.email,
-            id: userData.id,
-            picture: userData.picture,
+        const entriesData = entriesResponse.data;
+        const mappedEntries = entriesData.map((entry) => ({
+          start_date: entry.start_date,
+          amount: entry.amount,
+          description: entry.description,
+          frequency: entry.frequency,
+          custom_frequency_days: entry.custom_frequency_days,
+          frequency_number: entry.frequency_number,
+          end_date: entry.end_date,
+          budget_id: entry.budget_id,
+          category: {
+            // Assuming the category info is available, fill in accordingly
+            id: entry.category_id,
           },
-          budgets: budgetsResponse.data,
-          currentBudget: sortedBudgets[0],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  },
-
-  clearUser: () => set({ user: null }),
-
-  setCategory: (category: Category) => {
-    set((state) => ({
-      ...state,
-      selectedCategory: category,
-      tags: CategoryTags[category] || [], // Safely update the tags based on the selected category
-    }));
-  },
-
-  setBudgetName: (name: string) => {
-    set((state) => ({
-      currentBudget: { ...state.currentBudget, name }, // Update the current budget's name
-    }));
-  },
-
-  beginNewBudget: async () => {
-    try {
-      // Fetch default tags from the backend
-      const response = await axios.get(`${apiUrl}/tags/default_tags`, {
-        params: { user_id: 1 },
-      });
-
-      const defaultTags = response.data;
-
-      // Set the tags based on the fetched default tags
-      const expenseTags = defaultTags.filter((tag) => tag.category_id === 6);
-      const incomeTags = defaultTags.filter((tag) => tag.category_id === 7);
-      const savingsTags = defaultTags.filter((tag) => tag.category_id === 8);
-      const miscTags = defaultTags.filter((tag) => tag.category_id === 9);
-      const strategyTags = defaultTags.filter((tag) => tag.category_id === 10);
-      console.log(defaultTags, " the default tags");
-      console.log(incomeTags, " the income tags");
-
-      // Update Zustand state with fetched tags
-      set((state) => ({
-        tags: defaultTags, // Load default tags into Zustand state
-        incomeTags: incomeTags, // Set incomeTags to the fetched data
-        expenseTags: expenseTags, // Set expenseTags to the fetched data
-        savingsTags: savingsTags, // Set savingsTags to the fetched data
-        miscTags: miscTags, // Set miscTags to the fetched data
-        strategyTags: strategyTags, // Set strategyTags to the fetched data
-      }));
-    } catch (error) {
-      console.error("Error fetching default tags:", error);
-    }
-  },
-
-  addEntry: async (entryData: Entry, tagId: number | null) => {
-    const { entries, user, currentBudget, selectedCategory } = get();
-    console.log(entryData, " is the entry data");
-    console.log(selectedCategory, " is the category");
-    console.log(tagId, " is the tag id");
-    if (!user) {
-      console.error("User is not authenticated.");
-      return;
-    }
-
-    let budget = currentBudget;
-
-    console.log(budget, " the current budget from addEntry");
-    if (!budget || !budget.id) {
-      const defaultBudgetName = "";
-      const newBudget = await get().createNewBudget(defaultBudgetName);
-      if (!newBudget) {
-        console.error("Failed to create new budget. Aborting entry creation.");
-        return;
-      }
-      budget = newBudget;
-    }
-
-    // Handle case where tagId is missing (null or undefined)
-    if (tagId === null || tagId === undefined) {
-      console.log("No tagId provided. Creating new entry without a tag.");
-    }
-
-    const newEntryPayload = {
-      budget_id: budget.id,
-      start_date: entryData.start_date,
-      amount: entryData.amount,
-      description: entryData.description,
-      frequency: entryData.frequency,
-      custom_frequency_days: entryData.custom_frequency_days,
-      category_id: CategoryIdMap[selectedCategory],
-      frequency_number: entryData.frequency_number,
-      end_date: entryData.end_date,
-      tag_ids: [tagId], // matching join table for entries_tags
-    };
-
-    try {
-      const response = await axios.post(`${apiUrl}/entries`, {
-        entry: newEntryPayload,
-      });
-
-      if (response.status === 201) {
-        const savedEntry = response.data;
-
-        // Fetch the updated budget to update the local state
+          categoryTag: {
+            // Assuming you have tag data, fill in accordingly
+            id: entry.tag_id,
+          },
+        }));
         const updatedBudgetRes = await axios.get(
-          `${apiUrl}/budgets/${budget.id}`
+          `${apiUrl}/budgets/${get().currentBudget?.id}`
         );
         const updatedBudget = updatedBudgetRes.data;
 
-        // Update local store
-        set({
+        // Now update the Zustand store with multiple entries
+        set((state) => ({
           entries: {
-            ...entries,
-            [categoryId]: [...(entries[categoryId] || []), savedEntry],
+            ...state.entries,
+            [CategoryIdMap[get().selectedCategory]]: [
+              ...(state.entries[CategoryIdMap[get().selectedCategory]] || []),
+              ...mappedEntries, // Spread the mapped entries
+            ],
           },
           currentBudget: updatedBudget,
-        });
-      } else {
-        console.error(
-          "Unexpected response status while saving entry:",
-          response.status
-        );
-      }
-    } catch (error) {
-      console.error("Error saving entry:", error);
-    }
-  },
-  createNewBudget: async (name: string) => {
-    const { user } = get();
-    if (!user) {
-      console.error("User is not authenticated.");
-      return null;
-    }
-
-    try {
-      const response = await axios.post(`${apiUrl}/budgets`, {
-        budget: {
-          user_id: user.id,
-          name,
-        },
-      });
-
-      if (response.status === 201) {
-        const newBudget = response.data;
-        set((state) => ({
-          budgets: [...state.budgets, newBudget],
-          currentBudget: newBudget,
         }));
-        return newBudget;
-      } else {
-        console.error("Unexpected response status:", response.status);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error creating new budget:", error);
-      return null;
+        console.log(get().entries, " the entries response from fetchUserData");
+      },
+
+      setCategory: async (category: Category) => {
+        const currentTagsCategoryIds = get().tags.map((tag) => tag.category_id);
+        const requiredCategoryId = CategoryIdMap[category];
+        const isCategoryPresent =
+          currentTagsCategoryIds.includes(requiredCategoryId);
+        const { entries } = get();
+        let category_id: number | undefined;
+
+        console.log(
+          category,
+          " the category that was passed as type CATEGORY in setCategory"
+        );
+
+        if (Object.values(Category).includes(category)) {
+          console.log("its in category");
+          category_id = CategoryIdMap[category];
+          console.log(category_id, "category ID processed in fetchUserData");
+        } else {
+          console.log("cannot find category ID");
+        }
+
+        if (Object.keys(entries).length === 0) {
+          console.log("entries is empty");
+          await get().fetchCategoryEntries(category_id);
+          console.log("completed fetch category entries");
+          console.log(get().entries, "the ENTIRES YAY");
+        } else {
+          console.log(get().entries, "the ENTIRES YAY");
+        }
+
+        if (Object.keys(entries).length !== 0) {
+          console.log(get().entries, "the ENTIRES YAY");
+        }
+
+        if (!isCategoryPresent) {
+          try {
+            const response = await axios.get(`${apiUrl}/tags/default_tags`, {
+              params: { user_id: 1 },
+            });
+
+            const newTags = response.data.filter(
+              (tag: TagType) => tag.category_id === requiredCategoryId
+            );
+
+            set((state) => ({
+              ...state,
+              selectedCategory: category,
+              tags: [...state.tags, ...newTags],
+            }));
+          } catch (error) {
+            console.error("Error fetching default tags:", error);
+          }
+        } else {
+          set((state) => ({
+            ...state,
+            selectedCategory: category,
+            tags: CategoryTags[category],
+          }));
+        }
+      },
+
+      setBudgetName: (name: string) => {
+        set((state) => ({
+          currentBudget: { ...state.currentBudget, name },
+        }));
+      },
+
+      beginNewBudget: async () => {
+        try {
+          const response = await axios.get(`${apiUrl}/tags/default_tags`, {
+            params: { user_id: 1 },
+          });
+
+          const defaultTags = response.data;
+          const expenseTags = defaultTags.filter(
+            (tag) => tag.category_id === 6
+          );
+          const incomeTags = defaultTags.filter((tag) => tag.category_id === 7);
+          const savingsTags = defaultTags.filter(
+            (tag) => tag.category_id === 8
+          );
+          const miscTags = defaultTags.filter((tag) => tag.category_id === 9);
+          const strategyTags = defaultTags.filter(
+            (tag) => tag.category_id === 10
+          );
+
+          set((state) => ({
+            tags: defaultTags,
+            incomeTags,
+            expenseTags,
+            savingsTags,
+            miscTags,
+            strategyTags,
+          }));
+        } catch (error) {
+          console.error("Error fetching default tags:", error);
+        }
+      },
+
+      addEntry: async (entryData, tagId) => {
+        const { entries, user, currentBudget, selectedCategory } = get();
+
+        if (!user) {
+          console.error("User is not authenticated.");
+          return;
+        }
+
+        let budget = currentBudget;
+        if (!budget || !budget.id) {
+          const newBudget = await get().createNewBudget("");
+          if (!newBudget) {
+            console.error(
+              "Failed to create new budget. Aborting entry creation."
+            );
+            return;
+          }
+          budget = newBudget;
+        }
+
+        const newEntryPayload = {
+          budget_id: budget.id,
+          start_date: entryData.start_date,
+          amount: entryData.amount,
+          description: entryData.description,
+          frequency: entryData.frequency,
+          custom_frequency_days: entryData.custom_frequency_days,
+          category_id: CategoryIdMap[selectedCategory],
+          frequency_number: entryData.frequency_number,
+          end_date: entryData.end_date,
+          tag_ids: tagId !== null ? [tagId] : [],
+        };
+
+        try {
+          const response = await axios.post(`${apiUrl}/entries`, {
+            entry: newEntryPayload,
+          });
+
+          if (response.status === 201) {
+            const savedEntry = response.data;
+
+            const updatedBudgetRes = await axios.get(
+              `${apiUrl}/budgets/${budget.id}`
+            );
+            const updatedBudget = updatedBudgetRes.data;
+
+            set({
+              entries: {
+                ...entries,
+                [CategoryIdMap[selectedCategory]]: [
+                  ...(entries[CategoryIdMap[selectedCategory]] || []),
+                  savedEntry,
+                ],
+              },
+              currentBudget: updatedBudget,
+            });
+          }
+        } catch (error) {
+          console.error("Error adding entry:", error);
+        }
+      },
+
+      createNewBudget: async (name: string) => {
+        const { user } = get();
+        if (!user?.id) {
+          console.error("User ID is missing.");
+          return;
+        }
+
+        try {
+          const response = await axios.post(`${apiUrl}/budgets`, {
+            budget: { name, user_id: user.id },
+          });
+
+          if (response.status === 201) {
+            const newBudget = response.data;
+            set((state) => ({
+              budgets: [newBudget, ...state.budgets],
+              currentBudget: newBudget,
+            }));
+            return newBudget;
+          }
+        } catch (error) {
+          console.error("Error creating new budget:", error);
+        }
+      },
+    }),
+    {
+      name: "budget-storage",
+      storage: createJSONStorage(() => AsyncStorage),
     }
-  },
-}));
+  )
+);
