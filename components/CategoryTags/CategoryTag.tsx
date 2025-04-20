@@ -1,6 +1,8 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
+import { useBudgetStore } from "@/store/budget";
+import { EntryPreview } from "../Entries/EntryPreview";
 
 export const CategoryTag: React.FC = ({
   tagId,
@@ -12,9 +14,12 @@ export const CategoryTag: React.FC = ({
   categoryId: number;
 }) => {
   const router = useRouter();
-
-  console.log(categoryId, " category id");
-  console.log(tagId, " the tag id");
+  const categoryEntries = useBudgetStore((state) => state.entries);
+  const category = useBudgetStore((state) => state.selectedCategory);
+  const entries: Entry[] = categoryEntries?.[category] || [];
+  const filteredEntries = entries.filter(
+    (entry) => entry.categoryTag?.id === tagId
+  );
 
   const handleNavigate = () => {
     router.push(
@@ -24,11 +29,46 @@ export const CategoryTag: React.FC = ({
     );
   };
 
+  const handleViewDetails = () => {
+    router.push(
+      `/category/tag-details?tagId=${tagId}&tagName=${encodeURIComponent(
+        tagName
+      )}&categoryId=${categoryId}`
+    );
+  };
+
   return (
-    <TouchableOpacity onPress={handleNavigate}>
-      <View className="bg-white rounded-lg shadow-lg p-4 m-2">
+    <View className="bg-white rounded-lg shadow-lg p-4 m-2">
+      <View className="flex-row justify-between items-center mb-2">
         <Text className="text-xl font-bold">{tagName}</Text>
+
+        <View className="space-y-2">
+          <TouchableOpacity
+            onPress={handleNavigate}
+            className="bg-blue-500 px-3 py-1 rounded-lg"
+          >
+            <Text className="text-white font-semibold text-sm">
+              + Add Entry
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleViewDetails}
+            className="bg-green-500 px-3 py-1 rounded-lg"
+          >
+            <Text className="text-white font-semibold text-sm">
+              View Details
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </TouchableOpacity>
+
+      {/* Entry Previews */}
+      <View>
+        {filteredEntries.map((entry) => (
+          <EntryPreview key={entry.id} {...entry} />
+        ))}
+      </View>
+    </View>
   );
 };
