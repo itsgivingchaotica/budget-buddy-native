@@ -36,7 +36,7 @@ interface BudgetState {
     category_id: number
   ) => Promise<void>;
   clearUser: () => void;
-  setCategory: (category: Category) => void;
+  setCategory: (category: Category) => Promise<void>;
   addEntry: (entryData: Entry, tagId: number | null) => Promise<void>;
   createNewBudget: (name: string) => Promise<Budget | void>;
   beginNewBudget: () => Promise<void>;
@@ -185,59 +185,119 @@ export const useBudgetStore = create<BudgetState>()(
         }
       },
 
-      clearUser: () => set({ user: null }),
+      clearUser: () => {
+        // Clear the user data and reset all store values
+        set({
+          user: null,
+          budgets: [],
+          currentBudget: {
+            id: null,
+            name: null,
+            created_at: null,
+            updated_at: null,
+          },
+          selectedCategory: null,
+          tags: [],
+          incomeTags: [],
+          expenseTags: [],
+          savingsTags: [],
+          miscTags: [],
+          strategyTags: [],
+          entries: {},
+        });
 
+        // Clear AsyncStorage to ensure persisted data is also removed
+        AsyncStorage.clear()
+          .then(() => {
+            console.log("AsyncStorage has been cleared");
+          })
+          .catch((error) => {
+            console.error("Error clearing AsyncStorage:", error);
+          });
+      },
+
+      // Fetch and update the state directly with mapped entries
       fetchCategoryEntries: async (category_id: number) => {
-        const entriesResponse = await axios.get(
-          `${apiUrl}/entries/entries_by_budget_with_default_categories`,
-          {
-            params: {
-              budget_id: get().currentBudget?.id,
-              category_id: category_id,
-            },
+        try {
+          const budgetId = get().currentBudget?.id;
+          if (!budgetId) {
+            console.warn("No current budget found.");
+            return;
           }
-        );
-        console.log(
-          "THE ENTRIES FROM FETCH CATEGORy ENTRIES",
-          entriesResponse.data
-        );
 
-        const entriesData = entriesResponse.data;
-        const mappedEntries = entriesData.map((entry) => ({
-          start_date: entry.start_date,
-          amount: entry.amount,
-          description: entry.description,
-          frequency: entry.frequency,
-          custom_frequency_days: entry.custom_frequency_days,
-          frequency_number: entry.frequency_number,
-          end_date: entry.end_date,
-          budget_id: entry.budget_id,
-          category: {
-            // Assuming the category info is available, fill in accordingly
-            id: entry.category_id,
-          },
-          categoryTag: {
-            // Assuming you have tag data, fill in accordingly
-            id: entry.tag_id,
-          },
-        }));
-        const updatedBudgetRes = await axios.get(
-          `${apiUrl}/budgets/${get().currentBudget?.id}`
-        );
-        const updatedBudget = updatedBudgetRes.data;
+          // Fetch entries from backend
+          const { data: entriesData } = await axios.get(
+            `${apiUrl}/entries/entries_by_budget_with_default_categories`,
+            {
+              params: {
+                budget_id: budgetId,
+                category_id,
+              },
+            }
+          );
 
-        // Now update the Zustand store with multiple entries
-        set((state) => ({
-          entries: {
-            ...state.entries,
-            [CategoryIdMap[get().selectedCategory]]: [
-              ...(state.entries[CategoryIdMap[get().selectedCategory]] || []),
-              ...mappedEntries, // Spread the mapped entries
-            ],
-          },
-          currentBudget: updatedBudget,
-        }));
-        console.log(get().entries, " the entries response from fetchUserData");
+          console.log("THE ENTRIES FROM FETCH CATEGORY ENTRIES", entriesData);
+
+          // Convert response to Entry format
+          const mappedEntries = entriesData.map((entry) => ({
+            id: entry.id,
+            start_date: entry.start_date,
+            amount: entry.amount,
+            description: entry.description,
+            frequency: entry.frequency,
+            custom_frequency_days: entry.custom_frequency_days,
+            frequency_number: entry.frequency_number,
+            end_date: entry.end_date,
+            budget_id: entry.budget_id,
+            category: {
+              id: entry.category_id,
+              name: Category[entry.category_id as keyof typeof Category], // Reverse mapping if this works
+            },
+            categoryTag: {
+              id: entry.tags?.[0]?.id ?? null,
+              name: entry.tags?.[0]?.name ?? null,
+            },
+          }));
+
+          // Reverse lookup to get the Category enum key from category_id
+          const categoryKey = Object.keys(CategoryIdMap).find(
+            (key) => CategoryIdMap[key as Category] === category_id
+          ) as Category | undefined;
+          console.log(categoryKey, "cate gory key");
+          if (!categoryKey) {
+            console.warn("Invalid category_id for CategoryIdMap");
+            return;
+          }
+
+          // Directly set the entries state to mappedEntries (replace instead of merging)
+          const updatedEntries = mappedEntries;
+
+          console.log(
+            "Mapped Entry IDs",
+            updatedEntries.map((e) => e.id)
+          );
+
+          // Get updated budget
+          const { data: updatedBudget } = await axios.get(
+            `${apiUrl}/budgets/${budgetId}`
+          );
+
+          // Update Zustand state
+          set((state) => ({
+            entries: {
+              ...state.entries,
+              [categoryKey]: updatedEntries, // Replace the entries for the category
+            },
+            currentBudget: updatedBudget,
+          }));
+
+          console.log(
+            get().entries,
+            "the entries response from fetchCategoryEntries"
+          );
+        } catch (error) {
+          console.error("Error fetching category entries:", error);
+        }
       },
 
       setCategory: async (category: Category) => {
@@ -261,14 +321,14 @@ export const useBudgetStore = create<BudgetState>()(
           console.log("cannot find category ID");
         }
 
-        if (Object.keys(entries).length === 0) {
-          console.log("entries is empty");
-          await get().fetchCategoryEntries(category_id);
-          console.log("completed fetch category entries");
-          console.log(get().entries, "the ENTIRES YAY");
-        } else {
-          console.log(get().entries, "the ENTIRES YAY");
-        }
+        // if (Object.keys(entries).length === 0) {
+        //   console.log("entries is empty");
+        await get().fetchCategoryEntries(category_id);
+        //   console.log("completed fetch category entries");
+        //   console.log(get().entries, "the ENTIRES YAY");
+        // } else {
+        //   console.log(get().entries, "the ENTIRES YAY");
+        // }
 
         if (Object.keys(entries).length !== 0) {
           console.log(get().entries, "the ENTIRES YAY");
