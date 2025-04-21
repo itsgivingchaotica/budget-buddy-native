@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useBudgetStore } from "@/store/budget";
 import { EntryPreview } from "../Entries/EntryPreview";
@@ -14,12 +14,15 @@ export const CategoryTag: React.FC = ({
   categoryId: number;
 }) => {
   const router = useRouter();
-  const categoryEntries = useBudgetStore((state) => state.entries);
   const category = useBudgetStore((state) => state.selectedCategory);
-  const entries: Entry[] = categoryEntries?.[category] || [];
-  const filteredEntries = entries.filter(
+  const entries = useBudgetStore((state) => state.entries[category] || []);
+  // console.log(entries, " the entries for ", category);
+  const filteredEntries = Object.values(entries).filter(
     (entry) => entry.categoryTag?.id === tagId
   );
+  // useEffect(() => {
+  //   console.log("Filtered entries for tag", tagId, ":", filteredEntries);
+  // }, [filteredEntries]);
 
   const handleNavigate = () => {
     router.push(
