@@ -29,7 +29,6 @@ export const CategoryList = ({ onPress }: CategoryListProps) => {
   const { setCategory } = useBudgetStore();
   const handleCategoryPress = async (category: Category) => {
     await setCategory(category);
-    console.log(category, "the selected category");
     router.push(`/category`);
   };
 

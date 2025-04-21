@@ -61,11 +61,8 @@ export default function CreateNewEntry() {
       frequency_number: isCustom ? customIntervalNumber : 0,
       end_date: futureDate,
     };
-
-    console.log("Selected Category:", selectedCategory);
-    console.log("Entry Data:", entryData);
     await addEntry(entryData, tagId); // Assuming index = 0 or pass the correct one
-
+    
     router.back(); // Navigate back
   };
 
