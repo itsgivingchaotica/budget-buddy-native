@@ -14,36 +14,27 @@ export default function CategoryComponent() {
     miscTags,
     strategyTags,
   } = useBudgetStore();
-  console.log("Current selected category:", selectedCategory);
-  console.log(CategoryTags[Category.INCOME], "INCOME TAGS");
+
   const getTagsForCategory = () => {
     switch (selectedCategory) {
       case Category.INCOME:
-        console.log("Income Tags Returned:", incomeTags);
         return incomeTags; // Return income tags
       case Category.EXPENSE:
-        console.log("Expense Tags Returned:", expenseTags);
         return expenseTags; // Return expense tags
       case Category.SAVINGS_GOALS:
-        console.log("Savings Tags Returned:", savingsTags);
         return savingsTags; // Return savings tags
       case Category.MISCELLANEOUS:
-        console.log("Misc Tags Returned:", miscTags);
         return miscTags; // Return miscellaneous tags
       case Category.BUDGETING_STRATEGY:
-        console.log("Strategy Tags Returned:", strategyTags);
         return strategyTags; // Return strategy tags
       default:
-        console.log("No matching category, returning empty array");
         return []; // Return an empty array if no category matches
     }
   };
-  console.log(getTagsForCategory(), " the tags for SELECTED CATEGORY");
   const tagsForSelectedCategory = getTagsForCategory();
   return (
     <ScrollView>
       {tagsForSelectedCategory.map((tag) => {
-        console.log("Rendering tag:", tag.category_id); // Debugging
         return (
           <CategoryTag
             key={tag.id}
