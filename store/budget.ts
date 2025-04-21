@@ -68,7 +68,7 @@ export const useBudgetStore = create<BudgetState>()(
       fetchUserData: async () => {
         const { user, incomeTags, tags, entries, selectedCategory } = get();
         let category;
-        console.log("selected CATEGORY: ", selectedCategory);
+        // console.log("selected CATEGORY: ", selectedCategory);
 
         if (Object.keys(entries).length === 0) {
           console.log("entries is empty");
@@ -81,10 +81,10 @@ export const useBudgetStore = create<BudgetState>()(
               },
             }
           );
-          console.log(
-            entriesResponse.data,
-            " the entries response from fetchUserData"
-          );
+          // console.log(
+          //   entriesResponse.data,
+          //   " the entries response from fetchUserData"
+          // );
         }
         if (user && incomeTags?.length && tags?.length) {
           console.log("user data already exists");
@@ -216,7 +216,6 @@ export const useBudgetStore = create<BudgetState>()(
           });
       },
 
-      // Fetch and update the state directly with mapped entries
       fetchCategoryEntries: async (category_id: number) => {
         try {
           const budgetId = get().currentBudget?.id;
@@ -225,7 +224,7 @@ export const useBudgetStore = create<BudgetState>()(
             return;
           }
 
-          // Fetch entries from backend
+          // Fetch entries from the backend for the specific category
           const { data: entriesData } = await axios.get(
             `${apiUrl}/entries/entries_by_budget_with_default_categories`,
             {
@@ -236,9 +235,8 @@ export const useBudgetStore = create<BudgetState>()(
             }
           );
 
-          console.log("THE ENTRIES FROM FETCH CATEGORY ENTRIES", entriesData);
+          // console.log("Fetched entries:", entriesData);
 
-          // Convert response to Entry format
           const mappedEntries = entriesData.map((entry) => ({
             id: entry.id,
             start_date: entry.start_date,
@@ -249,52 +247,44 @@ export const useBudgetStore = create<BudgetState>()(
             frequency_number: entry.frequency_number,
             end_date: entry.end_date,
             budget_id: entry.budget_id,
-            category: {
-              id: entry.category_id,
-              name: Category[entry.category_id as keyof typeof Category], // Reverse mapping if this works
-            },
-            categoryTag: {
-              id: entry.tags?.[0]?.id ?? null,
-              name: entry.tags?.[0]?.name ?? null,
-            },
+            category:
+              entry.tags && entry.tags.length > 0
+                ? {
+                    id: entry.tags[0].category_id, // Get category_id from the first tag
+                    name: entry.tags[0].name, // Get name from the first tag
+                  }
+                : { id: null, name: null }, // Fallback if no tags exist
+            categoryTag:
+              entry.tags && entry.tags.length > 0
+                ? {
+                    id: entry.tags[0].id, // Get tag id from the first tag
+                    name: entry.tags[0].name, // Get tag name from the first tag
+                  }
+                : { id: null, name: null }, // Fallback if no tags exist
           }));
 
-          // Reverse lookup to get the Category enum key from category_id
+          // Log the mapped entries to see the result
+          // console.log("Mapped Entries:", mappedEntries);
+
+          // Find the category key based on category_id
           const categoryKey = Object.keys(CategoryIdMap).find(
             (key) => CategoryIdMap[key as Category] === category_id
           ) as Category | undefined;
-          console.log(categoryKey, "cate gory key");
+
           if (!categoryKey) {
             console.warn("Invalid category_id for CategoryIdMap");
             return;
           }
 
-          // Directly set the entries state to mappedEntries (replace instead of merging)
-          const updatedEntries = mappedEntries;
-
-          console.log(
-            "Mapped Entry IDs",
-            updatedEntries.map((e) => e.id)
-          );
-
-          // Get updated budget
-          const { data: updatedBudget } = await axios.get(
-            `${apiUrl}/budgets/${budgetId}`
-          );
-
-          // Update Zustand state
+          // Update the entries in the Zustand store by category
           set((state) => ({
             entries: {
               ...state.entries,
-              [categoryKey]: updatedEntries, // Replace the entries for the category
+              [categoryKey]: mappedEntries, // Update with the fetched entries for the category
             },
-            currentBudget: updatedBudget,
           }));
 
-          console.log(
-            get().entries,
-            "the entries response from fetchCategoryEntries"
-          );
+          // console.log("Updated entries in Zustand:", get().entries);
         } catch (error) {
           console.error("Error fetching category entries:", error);
         }
@@ -314,9 +304,9 @@ export const useBudgetStore = create<BudgetState>()(
         );
 
         if (Object.values(Category).includes(category)) {
-          console.log("its in category");
+          // console.log("its in category");
           category_id = CategoryIdMap[category];
-          console.log(category_id, "category ID processed in fetchUserData");
+          // console.log(category_id, "category ID processed in fetchUserData");
         } else {
           console.log("cannot find category ID");
         }
@@ -330,9 +320,9 @@ export const useBudgetStore = create<BudgetState>()(
         //   console.log(get().entries, "the ENTIRES YAY");
         // }
 
-        if (Object.keys(entries).length !== 0) {
-          console.log(get().entries, "the ENTIRES YAY");
-        }
+        // if (Object.keys(entries).length !== 0) {
+        //   console.log(get().entries, "the ENTIRES YAY");
+        // }
 
         if (!isCategoryPresent) {
           try {
@@ -398,15 +388,16 @@ export const useBudgetStore = create<BudgetState>()(
           console.error("Error fetching default tags:", error);
         }
       },
-
       addEntry: async (entryData, tagId) => {
         const { entries, user, currentBudget, selectedCategory } = get();
 
+        // Ensure the user is authenticated
         if (!user) {
           console.error("User is not authenticated.");
           return;
         }
 
+        // Ensure we have a budget, create a new one if necessary
         let budget = currentBudget;
         if (!budget || !budget.id) {
           const newBudget = await get().createNewBudget("");
@@ -419,6 +410,7 @@ export const useBudgetStore = create<BudgetState>()(
           budget = newBudget;
         }
 
+        // Prepare the new entry payload
         const newEntryPayload = {
           budget_id: budget.id,
           start_date: entryData.start_date,
@@ -433,6 +425,7 @@ export const useBudgetStore = create<BudgetState>()(
         };
 
         try {
+          // Create the new entry via API
           const response = await axios.post(`${apiUrl}/entries`, {
             entry: newEntryPayload,
           });
@@ -440,24 +433,49 @@ export const useBudgetStore = create<BudgetState>()(
           if (response.status === 201) {
             const savedEntry = response.data;
 
+            // Fetch the updated budget data
             const updatedBudgetRes = await axios.get(
               `${apiUrl}/budgets/${budget.id}`
             );
             const updatedBudget = updatedBudgetRes.data;
+            // Extract the first tag from the response
+            const tag = savedEntry.tags?.[0];
 
-            set({
+            // Filter entries for the selected category and log them based on tagId
+            // const updatedEntries =
+            //   get().entries[CategoryIdMap[selectedCategory]] || [];
+            // Construct the updated entry with both category and categoryTag
+            const updatedEntry = {
+              ...savedEntry,
+              category: Category[selectedCategory], // Set the category field
+              categoryTag: tag
+                ? {
+                    id: tag.id,
+                    name: tag.name,
+                    categoryId: tag.category_id,
+                  }
+                : null,
+            };
+
+            set((state) => ({
               entries: {
-                ...entries,
-                [CategoryIdMap[selectedCategory]]: [
-                  ...(entries[CategoryIdMap[selectedCategory]] || []),
-                  savedEntry,
+                ...state.entries,
+                [selectedCategory]: [
+                  ...(state.entries[selectedCategory] || []),
+                  updatedEntry,
                 ],
               },
-              currentBudget: updatedBudget,
-            });
+            }));
+            // Check if the newly saved entry appears in the filtered list after the update
+            // const rerenderedEntries = get().entries || {};
+
+            // console.log(rerenderedEntries, " the rerendered entries");
           }
         } catch (error) {
-          console.error("Error adding entry:", error);
+          console.error("Error adding entry:", error.message || error);
+          if (error.stack) {
+            console.error(error.stack);
+          }
         }
       },
 
