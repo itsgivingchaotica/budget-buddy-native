@@ -11,6 +11,8 @@ npm-debug.*
 web-build/
 
 .env
+.env*
+!.env.example
 
 # macOS
 .DS_Store
@@ -20,3 +22,5 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+# Generated native project (expo prebuild); regenerate, do not edit
+/ios

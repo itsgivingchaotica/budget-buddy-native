@@ -17,6 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: true,
+    bundleIdentifier: "app.budgetbuddy.mvp.dev",
   },
   android: {
     adaptiveIcon: {
