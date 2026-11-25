@@ -1,64 +1,64 @@
 import "../global.css";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider, type Theme } from "@react-navigation/native";
+import { BricolageGrotesque_700Bold } from "@expo-google-fonts/bricolage-grotesque";
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { useBudgetStore } from "@/store/budget";
+import { colors } from "@/constants/Theme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+// LG1 (new tab layout): Forest Floor navigation colours (D-020). The spec
+// defines a light Birch background only, so the app no longer switches to the
+// dark navigation theme.
+const forestFloor: Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.pine,
+    background: colors.birch,
+    card: colors.card,
+    text: colors.bark,
+    border: colors.fern,
+  },
+};
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [fontsLoaded, fontError] = useFonts({
+    // Legacy screens (login) still use SUSE.
     "Suse-Variable": require("../assets/fonts/SUSE-VariableFont_wght.ttf"),
     "Suse-Medium": require("../assets/fonts/SUSE-Medium.ttf"),
     "Suse-Regular": require("../assets/fonts/SUSE-Regular.ttf"),
     "Suse-Bold": require("../assets/fonts/SUSE-Bold.ttf"),
     "Suse-Extra-Bold": require("../assets/fonts/SUSE-ExtraBold.ttf"),
+    // New screens: Bricolage Grotesque headings, Inter body (constants/Theme.ts).
+    BricolageGrotesque_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
   });
-  const { selectedCategory, currentBudget } = useBudgetStore();
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return null;
   }
 
+  // LG1: legacy new-budget and category/ screens are no longer routes (see legacy/).
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={forestFloor}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="new-budget"
-          options={{
-            headerShown: true,
-            headerTitle: currentBudget?.name || "New Budget",
-            headerBackTitle: "Back",
-            headerBackVisible: true,
-          }}
-        />
-        <Stack.Screen
-          name="category"
-          options={{
-            headerShown: true,
-            headerTitle: selectedCategory?.toUpperCase(),
-            headerBackTitle: "Categories",
-          }}
-        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

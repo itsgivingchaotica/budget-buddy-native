@@ -1,15 +1,15 @@
 {
   "total": 48,
   "files": {
-    "app/(tabs)/index.tsx": 2,
-    "app/category/index.tsx": 5,
-    "app/category/new-entry.tsx": 2,
-    "app/category/tag-details.tsx": 2,
-    "app/new-budget.tsx": 1,
     "components/CategoryTags/CategoryTag.tsx": 5,
     "components/DatePicker.tsx": 2,
     "components/Entries/EntryDetails.tsx": 1,
     "components/Entries/EntryPreview.tsx": 1,
+    "legacy/app/(tabs)/index.tsx": 2,
+    "legacy/app/category/index.tsx": 5,
+    "legacy/app/category/new-entry.tsx": 2,
+    "legacy/app/category/tag-details.tsx": 2,
+    "legacy/app/new-budget.tsx": 1,
     "store/budget.ts": 25,
     "utils/KindeConfig.ts": 1,
     "utils/services.ts": 1
