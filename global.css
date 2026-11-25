@@ -1,0 +1,4 @@
+/* NativeWind 4 (UP1): Tailwind entry point, imported once by app/_layout.tsx. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

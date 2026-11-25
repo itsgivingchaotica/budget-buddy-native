@@ -34,7 +34,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: {
     typedRoutes: true,
   },
-  extra: {
-    storybookEnabled: process.env.STORYBOOK === "1",
-  },
 });

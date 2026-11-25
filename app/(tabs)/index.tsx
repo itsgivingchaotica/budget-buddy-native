@@ -23,8 +23,6 @@ import CircularChart from "@/components/CircularChart";
 import { useBudgetStore } from "@/store/budget";
 import GetStarted from "@/components/GetStarted";
 import { CategoryList } from "@/components/Categories/CategoryList";
-import Constants from "expo-constants";
-import Storybook from "../../.storybook";
 
 function HomeScreen() {
   const { user, budgets, clearUser, currentBudget, beginNewBudget, tags } =
@@ -70,12 +68,14 @@ function HomeScreen() {
     <ScrollView className="flex-1">
       <LinearGradient
         colors={["#16a34a", "#22c55e", "#4ade80"]}
+        // UP1: was a fixed `height: 150` with `overflow: "visible"`, relying on
+        // the old architecture drawing content outside the gradient. The New
+        // Architecture clips it, so the gradient now grows to fit its content.
         style={{
-          height: 150,
+          minHeight: 150,
           width: "100%",
           marginTop: 20,
           padding: 20,
-          overflow: "visible",
         }}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -179,9 +179,7 @@ function HomeScreen() {
   );
 }
 
-export default Constants.expoConfig?.extra?.storybookEnabled
-  ? Storybook
-  : HomeScreen;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   titleContainer: {
