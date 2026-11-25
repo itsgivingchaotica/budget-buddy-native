@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import axios from "axios";
-import { client } from "@/utils/KindeConfig";
+import { api, deviceTimeZone } from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Budget,
@@ -43,98 +42,93 @@ interface BudgetState {
   setBudgetName: (name: string) => void;
 }
 
-const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+type BudgetData = Pick<
+  BudgetState,
+  | "user"
+  | "budgets"
+  | "currentBudget"
+  | "selectedCategory"
+  | "tags"
+  | "incomeTags"
+  | "expenseTags"
+  | "savingsTags"
+  | "miscTags"
+  | "strategyTags"
+  | "entries"
+>;
+
+// A fresh copy of the store's data: the starting state, what logout resets
+// to, and what old persisted data migrates to.
+export function initialBudgetData(): BudgetData {
+  return {
+    user: null,
+    budgets: [],
+    currentBudget: {
+      id: null,
+      name: null,
+      created_at: null,
+      updated_at: null,
+    } as unknown as Budget,
+    selectedCategory: null,
+    tags: [],
+    incomeTags: [],
+    expenseTags: [],
+    savingsTags: [],
+    miscTags: [],
+    strategyTags: [],
+    entries: {},
+  };
+}
+
+// Persisted-state version. Version 1 (2026-11-24, after C0 and the move to
+// the fresh MVP database): anything saved by an older build referred to the
+// old database's users, budgets and tags, so it is discarded, not migrated.
+export const BUDGET_STORE_VERSION = 1;
+
+export function migrateBudgetStore(persisted: unknown, version: number): BudgetData {
+  if (version < BUDGET_STORE_VERSION) {
+    return initialBudgetData();
+  }
+  return persisted as BudgetData;
+}
 
 export const useBudgetStore = create<BudgetState>()(
   persist(
     (set, get) => ({
-      user: null,
-      budgets: [],
-      currentBudget: {
-        id: null,
-        name: null,
-        created_at: null,
-        updated_at: null,
-      },
-      selectedCategory: null,
-      tags: [],
-      incomeTags: [],
-      expenseTags: [],
-      savingsTags: [],
-      miscTags: [],
-      strategyTags: [],
-      entries: {},
+      ...initialBudgetData(),
 
       fetchUserData: async () => {
-        const { user, incomeTags, tags, entries, selectedCategory } = get();
+        const { entries, selectedCategory } = get();
         let category;
         // console.log("selected CATEGORY: ", selectedCategory);
 
-        if (Object.keys(entries).length === 0) {
-          console.log("entries is empty");
-          const entriesResponse = await axios.get(
-            `${apiUrl}/entries/entries_by_budget_with_default_categories`,
-            {
+        // C0: only ask for entries when there is a budget. Since S3 (ownership
+        // rules) an unknown budget id is a 404, which used to abort this whole
+        // function. The response was never used here.
+        if (Object.keys(entries).length === 0 && get().currentBudget?.id) {
+          try {
+            await api.get("/entries/entries_by_budget_with_default_categories", {
               params: {
                 budget_id: get().currentBudget?.id,
                 category_id: CategoryIdMap[selectedCategory],
               },
-            }
-          );
-          // console.log(
-          //   entriesResponse.data,
-          //   " the entries response from fetchUserData"
-          // );
+            });
+          } catch (error) {
+            console.warn("Could not prefetch entries");
+          }
         }
-        if (user && incomeTags?.length && tags?.length) {
-          console.log("user data already exists");
-          return;
-        } else {
-          console.log("tags state not saved, fetching user data");
-        }
+        // Always ask the server who the caller is, even when a user is saved
+        // on the phone: saved data may belong to another login or an old
+        // database, and /me is what links or creates the backend user (S2).
         try {
-          const response = await client.getUserDetails();
-          const { family_name, given_name, email, picture } = response;
-
-          const budgetUser = await axios.get(`${apiUrl}/users/show_by_email`, {
-            params: { email },
+          // C0: GET /me finds or creates the caller's user from their Kinde
+          // login (S2), replacing the old "look up by email, else create" flow.
+          const { data: userData } = await api.get("/me", {
+            params: { time_zone: deviceTimeZone() },
           });
 
-          const userData = budgetUser.data;
-
-          if (userData.length === 0) {
-            const postResponse = await axios.post(`${apiUrl}/users`, {
-              first_name: given_name,
-              last_name: family_name,
-              email,
-              picture,
-            });
-
-            if (postResponse.status === 201) {
-              const {
-                id,
-                given_name: first_name,
-                family_name: last_name,
-                email,
-                picture,
-              } = postResponse.data;
-
-              set({
-                user: {
-                  last_name,
-                  first_name,
-                  email,
-                  id,
-                  picture,
-                },
-              });
-            }
-          } else {
-            const userId = userData.id;
-
-            const budgetsResponse = await axios.get(`${apiUrl}/budgets`, {
-              params: { user_id: userId },
-            });
+          {
+            const budgetsResponse = await api.get("/budgets");
 
             const sortedBudgets = budgetsResponse.data.sort(
               (a: Budget, b: Budget) =>
@@ -142,9 +136,7 @@ export const useBudgetStore = create<BudgetState>()(
                 new Date(a.created_at).getTime()
             );
 
-            const response = await axios.get(`${apiUrl}/tags/default_tags`, {
-              params: { user_id: 1 },
-            });
+            const response = await api.get("/tags/default_tags");
 
             const defaultTags = response.data;
 
@@ -187,24 +179,7 @@ export const useBudgetStore = create<BudgetState>()(
 
       clearUser: () => {
         // Clear the user data and reset all store values
-        set({
-          user: null,
-          budgets: [],
-          currentBudget: {
-            id: null,
-            name: null,
-            created_at: null,
-            updated_at: null,
-          },
-          selectedCategory: null,
-          tags: [],
-          incomeTags: [],
-          expenseTags: [],
-          savingsTags: [],
-          miscTags: [],
-          strategyTags: [],
-          entries: {},
-        });
+        set(initialBudgetData());
 
         // Clear AsyncStorage to ensure persisted data is also removed
         AsyncStorage.clear()
@@ -225,8 +200,8 @@ export const useBudgetStore = create<BudgetState>()(
           }
 
           // Fetch entries from the backend for the specific category
-          const { data: entriesData } = await axios.get(
-            `${apiUrl}/entries/entries_by_budget_with_default_categories`,
+          const { data: entriesData } = await api.get(
+            "/entries/entries_by_budget_with_default_categories",
             {
               params: {
                 budget_id: budgetId,
@@ -326,9 +301,7 @@ export const useBudgetStore = create<BudgetState>()(
 
         if (!isCategoryPresent) {
           try {
-            const response = await axios.get(`${apiUrl}/tags/default_tags`, {
-              params: { user_id: 1 },
-            });
+            const response = await api.get("/tags/default_tags");
 
             const newTags = response.data.filter(
               (tag: TagType) => tag.category_id === requiredCategoryId
@@ -359,9 +332,7 @@ export const useBudgetStore = create<BudgetState>()(
 
       beginNewBudget: async () => {
         try {
-          const response = await axios.get(`${apiUrl}/tags/default_tags`, {
-            params: { user_id: 1 },
-          });
+          const response = await api.get("/tags/default_tags");
 
           const defaultTags = response.data;
           const expenseTags = defaultTags.filter(
@@ -426,7 +397,7 @@ export const useBudgetStore = create<BudgetState>()(
 
         try {
           // Create the new entry via API
-          const response = await axios.post(`${apiUrl}/entries`, {
+          const response = await api.post("/entries", {
             entry: newEntryPayload,
           });
 
@@ -434,9 +405,7 @@ export const useBudgetStore = create<BudgetState>()(
             const savedEntry = response.data;
 
             // Fetch the updated budget data
-            const updatedBudgetRes = await axios.get(
-              `${apiUrl}/budgets/${budget.id}`
-            );
+            const updatedBudgetRes = await api.get(`/budgets/${budget.id}`);
             const updatedBudget = updatedBudgetRes.data;
             // Extract the first tag from the response
             const tag = savedEntry.tags?.[0];
@@ -487,8 +456,8 @@ export const useBudgetStore = create<BudgetState>()(
         }
 
         try {
-          const response = await axios.post(`${apiUrl}/budgets`, {
-            budget: { name, user_id: user.id },
+          const response = await api.post("/budgets", {
+            budget: { name },
           });
 
           if (response.status === 201) {
@@ -507,6 +476,8 @@ export const useBudgetStore = create<BudgetState>()(
     {
       name: "budget-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      version: BUDGET_STORE_VERSION,
+      migrate: migrateBudgetStore,
     }
   )
 );

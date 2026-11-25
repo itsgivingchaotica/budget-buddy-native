@@ -16,6 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Link, useRouter } from "expo-router";
 import services from "@/utils/services";
 import { client } from "@/utils/KindeConfig";
+import { logout } from "@/utils/session";
 import Header from "@/components/Header";
 import { LinearGradient } from "expo-linear-gradient";
 import CircularChart from "@/components/CircularChart";
@@ -47,22 +48,18 @@ function HomeScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const res = await client.logout();
-      // console.log(res, " logged out");
-      if (res) {
-        // Assuming services.removeData is a function to clear session data
+  // Always signs out locally, even if Kinde's logout page doesn't return to
+  // the app (see utils/session.ts).
+  const handleLogout = () =>
+    logout({
+      kindeLogout: () => client.logout(),
+      clearStore: clearUser,
+      clearStorage: async () => {
+        await useBudgetStore.persist.clearStorage();
         await services.clearAllData();
-        clearUser();
-        router.push("/login");
-      } else {
-        console.error("Logout failed");
-      }
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
-  };
+      },
+      goToLogin: () => router.replace("/login"),
+    });
 
   const handleBeginNewBudget = () => {
     beginNewBudget();

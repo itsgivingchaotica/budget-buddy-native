@@ -14,7 +14,9 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "storybook-generate": "sb-rn-get-stories",
-    "storybook": "start-storybook -p 6006"
+    "storybook": "start-storybook -p 6006",
+    "tsc:check": "node scripts/tsc-baseline-check.js",
+    "test:ci": "jest --ci"
   },
   "expo": {
     "config": "app.config.ts"
