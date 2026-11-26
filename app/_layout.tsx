@@ -1,6 +1,6 @@
 import "../global.css";
 import { DefaultTheme, ThemeProvider, type Theme } from "@react-navigation/native";
-import { BricolageGrotesque_700Bold } from "@expo-google-fonts/bricolage-grotesque";
+import { BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold } from "@expo-google-fonts/bricolage-grotesque";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -38,6 +38,7 @@ export default function RootLayout() {
     "Suse-Extra-Bold": require("../assets/fonts/SUSE-ExtraBold.ttf"),
     // New screens: Bricolage Grotesque headings, Inter body (constants/Theme.ts).
     BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,

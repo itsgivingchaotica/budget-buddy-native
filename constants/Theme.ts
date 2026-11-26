@@ -11,7 +11,8 @@ export const colors = {
   chestnut: "#8E4A1F", // accent text, "needs review" chip text
   bark: "#3A2A1E", // text
   barkSecondary: "#5B4A3C", // secondary text
-  ember: "#C0563A", // over budget: always with an icon and a label
+  ember: "#C0563A", // over budget: always with an icon and a label; Log out border
+  emberDark: "#A8432B", // error text, Log out label (C9)
   reviewChip: "#F6E7DA", // "needs review" chip background
   line: "#E6DCCF", // light borders: chips, outlined buttons, dividers (design screenshots)
   tile: "#F6F1E7", // number tiles inside white cards (Birch)
@@ -23,6 +24,7 @@ export const colors = {
 // Font family names as registered in app/_layout.tsx (@expo-google-fonts).
 export const fonts = {
   heading: "BricolageGrotesque_700Bold",
+  display: "BricolageGrotesque_800ExtraBold", // the "Budget Buddy" name on Welcome (C9)
   body: "Inter_400Regular",
   bodyMedium: "Inter_500Medium",
   bodySemiBold: "Inter_600SemiBold",

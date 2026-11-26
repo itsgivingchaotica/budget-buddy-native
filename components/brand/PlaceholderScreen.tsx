@@ -8,17 +8,22 @@ type Props = {
   subtitle: string;
   /** Which task fills this screen, shown as a small note. */
   comingIn: string;
+  /** Shown at the right of the title (e.g. Home's account button, C9). */
+  right?: ReactNode;
   children?: ReactNode;
 };
 
 /** LG1 (new tab layout): Forest Floor placeholder for a tab not built yet. */
-export function PlaceholderScreen({ title, subtitle, comingIn, children }: Props) {
+export function PlaceholderScreen({ title, subtitle, comingIn, right, children }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title} accessibilityRole="header">
-          {title}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} accessibilityRole="header">
+            {title}
+          </Text>
+          {right}
+        </View>
         <View style={styles.card}>
           <Text style={styles.body}>{subtitle}</Text>
           <Text style={styles.note}>{comingIn}</Text>
@@ -32,7 +37,8 @@ export function PlaceholderScreen({ title, subtitle, comingIn, children }: Props
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.birch },
   content: { padding: 20, gap: 16 },
-  title: { fontFamily: fonts.heading, fontSize: 32, color: colors.bark },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  title: { flex: 1, fontFamily: fonts.heading, fontSize: 32, color: colors.bark },
   card: { backgroundColor: colors.card, borderRadius: radius.card, padding: 20, gap: 8 },
   body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: colors.bark },
   note: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.barkSecondary },
