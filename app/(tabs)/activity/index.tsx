@@ -6,14 +6,16 @@ import { openBrowserAsync } from "expo-web-browser";
 import { Body, Button, Card, Chip, ErrorBox, Heading, LinkButton, Loading, NETWORK_ERROR, NumberTile } from "@/components/brand/ui";
 import { colors, fonts, minTouch, radius } from "@/constants/Theme";
 import {
-  countTransactions,
   listAccounts,
   listCategories,
   listTransactions,
+  reviewGroups,
+  suggestedTransfers,
   templateUrl,
   type Account,
   type Transaction,
 } from "@/utils/activityApi";
+import { rowChip } from "@/components/activity/rowChip";
 import { earliestDay, formatCount, formatDayWithWeekday, formatMoney, groupByDay, plural } from "@/utils/format";
 
 const PER_PAGE = 50;
@@ -24,6 +26,7 @@ export default function ActivityScreen() {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const [reviewCount, setReviewCount] = useState(0);
+  const [transfersCount, setTransfersCount] = useState(0);
   const [filter, setFilter] = useState<number | null>(null);
   const [rows, setRows] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
@@ -37,15 +40,19 @@ export default function ActivityScreen() {
       setLoading(true);
       setError(null);
       try {
-        const [accs, cats, toReview, first] = await Promise.all([
+        // C2b: "to review" is the Review screen's count (rows in a suggested
+        // transfer pair are on Transfers instead).
+        const [accs, cats, toReview, transfers, first] = await Promise.all([
           listAccounts(),
           listCategories(),
-          countTransactions({ needs_review: true }),
+          reviewGroups().then((r) => r.remaining),
+          suggestedTransfers().then((t) => t.total),
           listTransactions({ page: 1, per_page: PER_PAGE, ...(accountId ? { account_id: accountId } : {}) }),
         ]);
         setAccounts(accs);
         setCategoryNames(Object.fromEntries(cats.map((c) => [c.slug, c.name])));
         setReviewCount(toReview);
+        setTransfersCount(transfers);
         setRows(first.transactions);
         setTotal(first.total);
         setPage(1);
@@ -102,18 +109,29 @@ export default function ActivityScreen() {
           <LinkButton label="Accounts" onPress={() => router.push("/activity/accounts")} />
         </View>
       ) : null}
-      {reviewCount > 0 ? (
-        // A "transfers to confirm" tile joins this row with TR1 (transfer matching).
+      {reviewCount > 0 || transfersCount > 0 ? (
         <View style={styles.tiles}>
-          <Pressable
-            style={styles.tileTouch}
-            onPress={() => router.push("/activity/review")}
-            accessibilityRole="button"
-            accessibilityLabel={`${reviewCount} to review`}
-          >
-            <NumberTile value={formatCount(reviewCount)} label="to review" tone="outlinedReview" />
-          </Pressable>
-          <View style={styles.tileTouch} />
+          {reviewCount > 0 ? (
+            <Pressable
+              style={styles.tileTouch}
+              onPress={() => router.push("/activity/review")}
+              accessibilityRole="button"
+              accessibilityLabel={`${reviewCount} to review`}
+            >
+              <NumberTile value={formatCount(reviewCount)} label="to review" tone="outlinedReview" />
+            </Pressable>
+          ) : null}
+          {transfersCount > 0 ? (
+            <Pressable
+              style={styles.tileTouch}
+              onPress={() => router.push("/activity/transfers")}
+              accessibilityRole="button"
+              accessibilityLabel={`${transfersCount} transfers to confirm`}
+            >
+              <NumberTile value={formatCount(transfersCount)} label="transfers to confirm" tone="outlinedPositive" />
+            </Pressable>
+          ) : null}
+          {reviewCount === 0 || transfersCount === 0 ? <View style={styles.tileTouch} /> : null}
         </View>
       ) : null}
       {accounts && accounts.length > 1 ? (
@@ -176,6 +194,7 @@ export default function ActivityScreen() {
             transaction={item}
             accountName={accountName[item.account_id]}
             categoryName={item.category ? categoryNames[item.category] ?? item.category : null}
+            suggestionName={item.suggested_category ? categoryNames[item.suggested_category] ?? item.suggested_category : null}
           />
         )}
         onEndReached={loadMore}
@@ -198,10 +217,12 @@ function TransactionRow({
   transaction,
   accountName,
   categoryName,
+  suggestionName,
 }: {
   transaction: Transaction;
   accountName?: string;
   categoryName: string | null;
+  suggestionName?: string | null;
 }) {
   const money = formatMoney(transaction.amount);
   return (
@@ -211,11 +232,7 @@ function TransactionRow({
           {transaction.description}
         </Text>
         <View style={styles.rowMeta}>
-          {transaction.needs_review || !categoryName ? (
-            <Chip label="Needs review" tone="review" />
-          ) : (
-            <Chip label={categoryName} tone="positive" />
-          )}
+          <Chip {...rowChip(transaction, categoryName, suggestionName ?? null)} />
           {accountName ? <Body secondary>{accountName}</Body> : null}
         </View>
       </View>

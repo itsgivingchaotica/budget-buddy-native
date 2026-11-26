@@ -17,6 +17,8 @@ jest.mock("@/utils/activityApi", () => ({
   listAccounts: jest.fn(async () => []),
   listCategories: jest.fn(async () => []),
   countTransactions: jest.fn(async () => 0),
+  reviewGroups: jest.fn(async () => ({ remaining: 0, groups: [] })),
+  suggestedTransfers: jest.fn(async () => ({ transfer_links: [], total: 0 })),
   listTransactions: jest.fn(async () => ({ transactions: [], page: 1, per_page: 50, total: 0 })),
   templateUrl: () => "http://example.test/csv-templates/generic.csv",
 }));

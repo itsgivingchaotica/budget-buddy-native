@@ -121,7 +121,8 @@ export function LinkButton({
   );
 }
 
-type ChipTone = "neutral" | "review" | "positive";
+/** suggestion: Claude's unsure pick, "<Category>?" (Fern background, Pine border). */
+type ChipTone = "neutral" | "review" | "positive" | "suggestion";
 
 export function Chip({
   label,
@@ -137,8 +138,15 @@ export function Chip({
   /** small: status chips in rows. large: selectable chips (filters, form choices). */
   size?: "small" | "large";
 }) {
-  const toneStyle = tone === "review" ? styles.chipReview : tone === "positive" ? styles.chipPositive : styles.chipNeutral;
-  const textColor = tone === "review" ? colors.chestnut : tone === "positive" ? colors.pine : colors.bark;
+  const toneStyle =
+    tone === "review"
+      ? styles.chipReview
+      : tone === "positive"
+        ? styles.chipPositive
+        : tone === "suggestion"
+          ? styles.chipSuggestion
+          : styles.chipNeutral;
+  const textColor = tone === "review" ? colors.chestnut : tone === "positive" || tone === "suggestion" ? colors.pine : colors.bark;
   const body = (
     <View style={[styles.chip, size === "large" && styles.chipLarge, toneStyle, selected && styles.chipSelected]}>
       <Text style={[styles.chipText, size === "large" && styles.chipTextLarge, { color: selected ? colors.white : textColor }]}>
@@ -148,9 +156,15 @@ export function Chip({
   );
   if (!onPress) return body;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: !!selected }} style={styles.chipTouch}>
+    <PressableBox
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: !!selected }}
+      style={styles.chipTouch}
+    >
       {body}
-    </Pressable>
+    </PressableBox>
   );
 }
 
@@ -263,6 +277,7 @@ const styles = StyleSheet.create({
   chipNeutral: { backgroundColor: colors.white, borderColor: colors.line },
   chipReview: { backgroundColor: colors.reviewChip, borderColor: colors.reviewChip },
   chipPositive: { backgroundColor: colors.fern, borderColor: colors.fern },
+  chipSuggestion: { backgroundColor: colors.fern, borderColor: colors.pine },
   chipSelected: { backgroundColor: colors.pine, borderColor: colors.pine },
   chipText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
   chipTextLarge: { fontSize: 16, fontFamily: fonts.body },

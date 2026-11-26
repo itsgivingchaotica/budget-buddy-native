@@ -24,8 +24,10 @@ export type Transaction = {
   amount: string;
   description: string;
   category: string | null; // slug
+  suggested_category: string | null; // slug of Claude's unsure pick (C2b)
   categorization_source: string;
   needs_review: boolean;
+  transfer_suggested: boolean; // in a suggested transfer pair (TR1)
 };
 
 export type TransactionPage = { transactions: Transaction[]; page: number; per_page: number; total: number };
@@ -134,4 +136,64 @@ export function apiError(error: unknown): { status?: number; code?: string; mess
 export function templateUrl(): string {
   const base = (process.env.EXPO_PUBLIC_API_BASE_URL || "").replace(/\/api\/v1\/?$/, "");
   return `${base}/csv-templates/generic.csv`;
+}
+
+
+// --- C2b (review and transfer screens) ------------------------------------
+
+export type CategoryRef = { id: number; slug: string; name: string };
+
+export type ReviewGroup = {
+  merchant_key: string;
+  display_name: string;
+  count: number;
+  total: string;
+  accounts: { id: number; name: string; purpose: AccountPurpose }[];
+  representative_transaction_id: number;
+  suggested_category: CategoryRef | null;
+  alternatives: CategoryRef[];
+};
+
+export async function reviewGroups(): Promise<{ remaining: number; groups: ReviewGroup[] }> {
+  const { data } = await api.get("/transactions/review_groups");
+  return data;
+}
+
+/** A pick on Review: sets the category, teaches merchant memory, updates the group (AI3). */
+export async function pickCategory(transactionId: number, slug: string): Promise<{ also_updated: number; correction_id: number }> {
+  const { data } = await api.patch(`/transactions/${transactionId}`, { transaction: { category: slug } });
+  return data;
+}
+
+export async function undoCorrection(correctionId: number): Promise<{ restored_transaction_ids: number[]; remaining: number }> {
+  const { data } = await api.post(`/category_corrections/${correctionId}/undo`);
+  return data;
+}
+
+export type TransferSide = { id: number; account_id: number; account_name: string; posted_on: string; description: string; amount: string };
+export type TransferPair = {
+  id: number;
+  status: "suggested" | "confirmed" | "rejected";
+  days_apart: number;
+  amount: string;
+  outflow: TransferSide;
+  inflow: TransferSide;
+};
+
+export async function suggestedTransfers(): Promise<{ transfer_links: TransferPair[]; total: number }> {
+  const { data } = await api.get("/transfer_links", { params: { status: "suggested" } });
+  return data;
+}
+
+export async function confirmTransfer(id: number): Promise<TransferPair> {
+  return (await api.post(`/transfer_links/${id}/confirm`)).data;
+}
+
+export async function rejectTransfer(id: number): Promise<TransferPair> {
+  return (await api.post(`/transfer_links/${id}/reject`)).data;
+}
+
+/** Undo a confirm or a reject: the pair goes back to suggested. */
+export async function undoTransfer(id: number): Promise<TransferPair> {
+  return (await api.delete(`/transfer_links/${id}`)).data;
 }

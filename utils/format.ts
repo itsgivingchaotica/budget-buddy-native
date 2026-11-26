@@ -87,3 +87,14 @@ export function formatDayLong(day: string): string {
 export function formatCount(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+/** Transfer pairs: "Same day", "1 day apart", "3 days apart". */
+export function daysApartLabel(days: number): string {
+  if (days === 0) return "Same day";
+  return `${days} ${days === 1 ? "day" : "days"} apart`;
+}
+
+/** "$200.00": an amount without its sign (Transfers cards show the size). */
+export function amountWithoutSign(amount: string): string {
+  return formatMoney(amount).text.replace(/^[+−]/, "");
+}
