@@ -13,6 +13,9 @@ export const colors = {
   barkSecondary: "#5B4A3C", // secondary text
   ember: "#C0563A", // over budget: always with an icon and a label
   reviewChip: "#F6E7DA", // "needs review" chip background
+  line: "#E6DCCF", // light borders: chips, outlined buttons, dividers (design screenshots)
+  tile: "#F6F1E7", // number tiles inside white cards (Birch)
+  dayHeader: "#5E7A4E", // day headers in the Activity list (muted green, from the design)
   card: "#FFFFFF",
   white: "#FFFFFF",
 } as const;

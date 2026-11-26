@@ -32,11 +32,11 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: icon("home", "home-outline") }} />
-      <Tabs.Screen name="plan" options={{ title: "Plan", tabBarIcon: icon("map", "map-outline") }} />
-      <Tabs.Screen name="activity" options={{ title: "Activity", tabBarIcon: icon("list", "list-outline") }} />
+      <Tabs.Screen name="plan" options={{ title: "Plan", tabBarIcon: icon("document-text", "document-text-outline") }} />
+      <Tabs.Screen name="activity" options={{ title: "Activity", tabBarIcon: icon("reorder-three", "reorder-three-outline") }} />
       <Tabs.Screen
         name="coach"
-        options={{ title: "Coach", tabBarIcon: icon("chatbubble-ellipses", "chatbubble-ellipses-outline") }}
+        options={{ title: "Coach", tabBarIcon: icon("chatbox", "chatbox-outline") }}
       />
     </Tabs>
   );
