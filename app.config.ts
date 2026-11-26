@@ -3,18 +3,16 @@ import { config } from "dotenv";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "bb-client",
+  // C9: the name under the icon and in iOS prompts ("Budget Buddy wants to
+  // use kinde.com to sign in"). The slug and the Xcode project stay bb-client / bbclient.
+  name: "Budget Buddy",
   slug: "bb-client",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
+  // C9: the mascot on Pine (no transparency; iOS rounds the corners).
+  icon: "./assets/images/app-icon-1024.png",
   scheme: "budget-buddy-scheme",
   userInterfaceStyle: "automatic",
-  splash: {
-    image: "./assets/images/splash.png",
-    resizeMode: "contain",
-    backgroundColor: "#ffffff",
-  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: "app.budgetbuddy.mvp.dev",
@@ -30,7 +28,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     output: "static",
     favicon: "./assets/images/favicon.png",
   },
-  plugins: ["expo-router", "expo-font"],
+  plugins: [
+    "expo-router",
+    "expo-font",
+    // C9 (SCREENS_WELCOME.md §6): the mascot centred on Birch, about 200 pt
+    // wide. Light only (no dark variant), like the rest of the app.
+    [
+      "expo-splash-screen",
+      {
+        backgroundColor: "#F6F1E7",
+        image: "./assets/images/splash-mascot.png",
+        imageWidth: 200,
+        resizeMode: "contain",
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },
