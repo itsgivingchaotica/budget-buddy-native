@@ -124,7 +124,7 @@ export default function HomeScreen() {
             <LeftToSpendCard
               outlook={outlook}
               onDetails={() => setDetailsOpen(true)}
-              onMonth={() => router.push("/plan")}
+              onMonth={() => router.push({ pathname: "/plan", params: { section: "budgets" } })}
               onReview={() => router.push("/activity/review")}
             />
             <BillsCard bills={outlook.bills_due.items} today={outlook.today} busyKey={busyKey} onToggle={toggleBill} />
