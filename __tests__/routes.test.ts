@@ -26,6 +26,7 @@ describe("app routes (LG1)", () => {
         "(tabs)/activity/index.tsx",
         "(tabs)/activity/new-account.tsx",
         "(tabs)/activity/review.tsx",
+        "(tabs)/activity/transfers.tsx",
         "(tabs)/coach.tsx",
         "(tabs)/index.tsx",
         "(tabs)/plan.tsx",
