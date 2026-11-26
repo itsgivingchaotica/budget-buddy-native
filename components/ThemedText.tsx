@@ -1,5 +1,4 @@
 import { Text, type TextProps } from "react-native";
-import { styled } from "nativewind";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
 export type ThemedTextProps = TextProps & {
@@ -7,8 +6,6 @@ export type ThemedTextProps = TextProps & {
   darkColor?: string;
   type?: "default" | "title" | "defaultSemiBold" | "subtitle" | "link";
 };
-
-const StyledText = styled(Text);
 
 export function ThemedText({
   style,
@@ -28,7 +25,8 @@ export function ThemedText({
   };
 
   return (
-    <StyledText
+    // NativeWind 4 (UP1): components take className directly; styled() is gone.
+    <Text
       style={[{ color }, style]}
       className={typeClasses[type]}
       {...rest}

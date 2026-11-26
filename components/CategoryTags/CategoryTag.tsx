@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React, { useEffect } from "react";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { useBudgetStore } from "@/store/budget";
 import { EntryPreview } from "../Entries/EntryPreview";
 
@@ -26,17 +26,19 @@ export const CategoryTag: React.FC = ({
 
   const handleNavigate = () => {
     router.push(
+      // LG1: legacy route, no longer registered (see legacy/README.md).
       `/category/new-entry?tagId=${encodeURIComponent(
         tagId
-      )}&tagName=${encodeURIComponent(tagName)}`
+      )}&tagName=${encodeURIComponent(tagName)}` as Href
     );
   };
 
   const handleViewDetails = () => {
     router.push(
+      // LG1: legacy route, no longer registered (see legacy/README.md).
       `/category/tag-details?tagId=${tagId}&tagName=${encodeURIComponent(
         tagName
-      )}&categoryId=${categoryId}`
+      )}&categoryId=${categoryId}` as Href
     );
   };
 

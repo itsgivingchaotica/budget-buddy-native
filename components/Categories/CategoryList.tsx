@@ -10,7 +10,7 @@ import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Category } from "@/utils/types";
 import { useBudgetStore } from "@/store/budget";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 // Define your categories
 // export enum Category {
 //   EXPENSE = "Expense",
@@ -29,7 +29,7 @@ export const CategoryList = ({ onPress }: CategoryListProps) => {
   const { setCategory } = useBudgetStore();
   const handleCategoryPress = async (category: Category) => {
     await setCategory(category);
-    router.push(`/category`);
+    router.push(`/category` as Href); // LG1: legacy route, no longer registered (see legacy/README.md).
   };
 
   return (
