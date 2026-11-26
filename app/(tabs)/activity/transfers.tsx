@@ -8,7 +8,7 @@ import { colors } from "@/constants/Theme";
 import { confirmTransfer, rejectTransfer, suggestedTransfers, undoTransfer, type TransferPair } from "@/utils/activityApi";
 import { formatCount } from "@/utils/format";
 
-/** C2b: Transfers (docs/product/SCREENS_ACTIVITY.md §6, screens/Activity-Transfers.png). */
+/** C2b: Transfers (bb-server/docs/product/SCREENS_ACTIVITY.md §6, screens/Activity-Transfers.png). */
 export default function TransfersScreen() {
   const router = useRouter();
   const [pairs, setPairs] = useState<TransferPair[] | null>(null);

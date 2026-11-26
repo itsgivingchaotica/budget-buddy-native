@@ -10,7 +10,7 @@ import { listAccounts, templateUrl, type Account } from "@/utils/activityApi";
 import { KIND_LABELS, PURPOSE_LABELS } from "@/utils/accountLabels";
 import { formatDay, freshness, plural } from "@/utils/format";
 
-/** C2: Accounts (docs/product/SCREENS_ACTIVITY.md §2, screens/Activity-Accounts.png). */
+/** C2: Accounts (bb-server/docs/product/SCREENS_ACTIVITY.md §2, screens/Activity-Accounts.png). */
 export default function AccountsScreen() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[] | null>(null);

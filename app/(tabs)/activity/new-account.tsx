@@ -7,7 +7,7 @@ import { colors, fonts, minTouch, radius } from "@/constants/Theme";
 import { apiError, createAccount, type AccountKind, type AccountPurpose } from "@/utils/activityApi";
 import { KIND_LABELS, KINDS, PURPOSE_LABELS, PURPOSES } from "@/utils/accountLabels";
 
-/** C2: Add account (docs/product/SCREENS_ACTIVITY.md §3). */
+/** C2: Add account (bb-server/docs/product/SCREENS_ACTIVITY.md §3). */
 export default function NewAccountScreen() {
   const router = useRouter();
   const [name, setName] = useState("");
