@@ -1,5 +1,5 @@
 // C2: the words the Activity screens use for account kinds and purposes
-// (docs/product/SCREENS_ACTIVITY.md §3), mapped to the API's values.
+// (bb-server/docs/product/SCREENS_ACTIVITY.md §3), mapped to the API's values.
 import type { AccountKind, AccountPurpose } from "@/utils/activityApi";
 
 export const KIND_LABELS: Record<AccountKind, string> = {

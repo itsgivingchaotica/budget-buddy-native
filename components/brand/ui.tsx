@@ -1,5 +1,5 @@
 // C2: shared Forest Floor building blocks for the Activity screens
-// (docs/product/SCREENS_ACTIVITY.md "Shared rules", docs/product/screens/).
+// (bb-server/docs/product/SCREENS_ACTIVITY.md "Shared rules", bb-server/docs/product/screens/).
 // Real buttons, 44-pt touch targets, selected state exposed to accessibility.
 import React, { useState, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type PressableProps, type StyleProp, type TextStyle, type ViewStyle } from "react-native";

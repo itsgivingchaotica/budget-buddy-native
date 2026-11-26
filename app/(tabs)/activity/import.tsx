@@ -28,7 +28,7 @@ type Phase =
   | { step: "done"; result: ImportResult; figures: ImportFigures }
   | { step: "fileError"; message: string };
 
-/** C2: Import and result (docs/product/SCREENS_ACTIVITY.md §4, screens/Activity-Import.png). */
+/** C2: Import and result (bb-server/docs/product/SCREENS_ACTIVITY.md §4, screens/Activity-Import.png). */
 export default function ImportScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ accountId?: string }>();

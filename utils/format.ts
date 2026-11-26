@@ -1,5 +1,5 @@
 // C2 (accounts and import screens): shared display helpers for the Activity
-// tab (docs/product/SCREENS_ACTIVITY.md, "Shared rules"). Pure functions.
+// tab (bb-server/docs/product/SCREENS_ACTIVITY.md, "Shared rules"). Pure functions.
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

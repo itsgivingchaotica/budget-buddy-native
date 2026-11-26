@@ -1,6 +1,6 @@
 // Forest Floor brand tokens (D-020): the one place new screens take colours,
 // fonts and shapes from (LG1). Legacy screens keep constants/Colors.ts.
-// Spec: docs/product/SCREENS_ACTIVITY.md ("Shared rules").
+// Spec: bb-server/docs/product/SCREENS_ACTIVITY.md ("Shared rules").
 
 export const colors = {
   pine: "#2F5D46", // primary

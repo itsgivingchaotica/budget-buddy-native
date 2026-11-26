@@ -1,5 +1,7 @@
 # Welcome to your Expo app 👋
 
+> **Project docs** (product specs, screen designs, architecture, plan and progress) live in the server repo: [`budget-buddy-server/docs/`](https://github.com/itsgivingchaotica/budget-buddy-server/tree/main/docs).
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started

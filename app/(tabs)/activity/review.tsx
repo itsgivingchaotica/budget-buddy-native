@@ -16,7 +16,7 @@ import {
 import { formatCount } from "@/utils/format";
 import { ReviewGroupCard, type Picked } from "@/components/activity/ReviewGroupCard";
 
-/** C2b: Review (docs/product/SCREENS_ACTIVITY.md §5, screens/Activity-Review.png). */
+/** C2b: Review (bb-server/docs/product/SCREENS_ACTIVITY.md §5, screens/Activity-Review.png). */
 export default function ReviewScreen() {
   const router = useRouter();
   const [groups, setGroups] = useState<ReviewGroup[] | null>(null);

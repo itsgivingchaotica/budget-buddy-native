@@ -20,7 +20,7 @@ import { earliestDay, formatCount, formatDayWithWeekday, formatMoney, groupByDay
 
 const PER_PAGE = 50;
 
-/** C2: Activity tab root (docs/product/SCREENS_ACTIVITY.md §1). */
+/** C2: Activity tab root (bb-server/docs/product/SCREENS_ACTIVITY.md §1). */
 export default function ActivityScreen() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[] | null>(null);
