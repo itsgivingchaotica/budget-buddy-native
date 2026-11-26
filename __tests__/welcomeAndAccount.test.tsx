@@ -7,7 +7,11 @@ const mockReplace = jest.fn();
 const mockLogin = jest.fn();
 const mockRegister = jest.fn();
 const mockFetchMe = jest.fn();
-jest.mock("expo-router", () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn() }) }));
+jest.mock("expo-router", () => ({
+  useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn() }),
+  useFocusEffect: jest.fn(), // Home's outlook load (C3) isn't under test here
+}));
+jest.mock("@/utils/homeApi", () => ({ weekOutlook: jest.fn(() => new Promise(() => {})) }));
 jest.mock("@/utils/KindeConfig", () => ({ client: { login: () => mockLogin(), register: () => mockRegister(), logout: jest.fn() } }));
 jest.mock("@/utils/services", () => ({ __esModule: true, default: { storeData: jest.fn(async () => {}), getData: jest.fn(), clearAllData: jest.fn() } }));
 jest.mock("@/utils/activityApi", () => ({ listAccounts: jest.fn(async () => []) }));
