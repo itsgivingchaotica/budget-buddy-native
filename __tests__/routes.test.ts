@@ -16,7 +16,7 @@ function routeFiles(dir: string): string[] {
 
 describe("app routes (LG1)", () => {
   // Test files must never live under app/: Expo Router would make them routes.
-  it("are the four tabs, the Activity stack, login and system files (no test files)", () => {
+  it("are the four tabs, the Activity stack, login, onboarding and system files (no test files)", () => {
     expect(routeFiles(appDir).sort()).toEqual(
       [
         "(tabs)/_layout.tsx",
@@ -35,6 +35,7 @@ describe("app routes (LG1)", () => {
         "_layout.tsx",
         "login/_layout.tsx",
         "login/index.tsx",
+      "onboarding/index.tsx",
       ].sort()
     );
   });

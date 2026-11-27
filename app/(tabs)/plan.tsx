@@ -129,7 +129,7 @@ export default function PlanScreen() {
         {error ? <ErrorBox message={error} onRetry={() => load(month)} /> : null}
         {!loaded && !error ? <Loading /> : null}
 
-        {loaded && noPlan ? <NoPlanCard onPlan={() => router.push("/coach")} /> : null}
+        {loaded && noPlan ? <NoPlanCard onPlan={() => router.push("/onboarding")} /> : null}
 
         {loaded && !noPlan ? (
           <>

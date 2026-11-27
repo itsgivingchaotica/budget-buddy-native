@@ -101,7 +101,7 @@ export default function HomeScreen() {
 
         {outlook?.state === "no_plan" ? (
           <>
-            <NoPlanCard onPlan={() => router.push("/coach")} />
+            <NoPlanCard onPlan={() => router.push("/onboarding")} />
             {accountCount !== null ? (
               <AccountsNote
                 count={accountCount}
