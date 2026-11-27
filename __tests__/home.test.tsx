@@ -174,7 +174,7 @@ describe("Home screen (C3)", () => {
     expect(screen.getByText("Data through Sat, Nov 21")).toBeTruthy();
     expect(screen.queryByText(/Left to spend/)).toBeNull();
     fireEvent.press(screen.getByText("Make a plan with your coach"));
-    expect(mockPush).toHaveBeenCalledWith("/coach");
+    expect(mockPush).toHaveBeenCalledWith("/onboarding");
   });
 
   it("mark paid calls the bills endpoint and reloads; the headline doesn't change", async () => {
