@@ -1,0 +1,51 @@
+name: Task (build work)
+description: One reviewable piece of build work. One task = one branch = one PR.
+title: "TASK-ID (plain name)"
+labels: ["task"]
+body:
+  - type: textarea
+    id: links
+    attributes:
+      label: Traceability
+      value: |
+        Spec: docs/product/SPEC_<FEATURE>.md §
+        Parent feature: P-n #
+        Ideas: I-nn
+        Handoff: #NN step n
+        Decisions: D-0nn
+    validations:
+      required: true
+  - type: input
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence.
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - feature
+        - fix
+        - chore
+        - docs
+    validations:
+      required: true
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance
+      options:
+        - label: The spec's worked examples pass as tests
+        - label: Ownership-matrix rows added
+        - label: Mutation checks all caught
+        - label: CI green
+        - label: Understanding check answered by the owner
+        - label: ARCHITECTURE.md and PROGRESS.md updated
+  - type: input
+    id: depends
+    attributes:
+      label: Depends on
+      placeholder: "#"

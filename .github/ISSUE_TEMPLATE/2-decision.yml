@@ -1,0 +1,45 @@
+name: Decision (D-0nn)
+description: A product or architecture decision for the owner to make.
+title: "D-0nn (plain name)"
+labels: ["decision", "status:proposed"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What needs deciding, and why now.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options
+      description: For each option, give its pros, cons, cost and how easy it is to reverse.
+      value: |
+        **A.**
+        **B.**
+        **C.**
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation (Claude)
+    validations:
+      required: true
+  - type: textarea
+    id: level
+    attributes:
+      label: Level impact
+      description: What changes at the next ambition level (L+1).
+  - type: textarea
+    id: decision
+    attributes:
+      label: Owner decision
+      description: Filled in by the owner, with the date.
+      placeholder: "Approved option __ (owner, YYYY-MM-DD)"
+  - type: input
+    id: recorded
+    attributes:
+      label: Recorded in
+      value: "docs/product/DESIGN_DECISIONS.md · PR #"

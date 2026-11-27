@@ -1,0 +1,47 @@
+name: Screen
+description: One screen area, with its mockup and feasibility flags.
+title: "SCREEN: <area>"
+labels: ["screen", "area:design", "area:client"]
+body:
+  - type: textarea
+    id: mockup
+    attributes:
+      label: Mockup
+      description: Attach the image, or link the design canvas.
+    validations:
+      required: true
+  - type: input
+    id: job
+    attributes:
+      label: User job it answers
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data shown → endpoint / field
+      value: |
+        - <what> → `GET /…` `field`
+  - type: textarea
+    id: actions
+    attributes:
+      label: Actions → endpoint
+      value: |
+        - <action> → `POST /…`
+  - type: checkboxes
+    id: states
+    attributes:
+      label: States designed
+      options:
+        - label: Loading
+        - label: Empty (first run)
+        - label: Partial
+        - label: Error
+        - label: Offline
+        - label: Stale
+        - label: AI-uncertain (if AI content is shown)
+  - type: textarea
+    id: flags
+    attributes:
+      label: Feasibility flags and resolutions
+      description: From the feasibility pass. Each flag gets a design change or a backend task issue.

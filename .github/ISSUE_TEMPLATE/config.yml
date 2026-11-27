@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How this project works
+    url: https://github.com/itsgivingchaotica/project-workflow-starter/blob/main/GETTING_STARTED.md
+    about: The project-build-workflow behind these issue types (Planner → Builder → Owner).

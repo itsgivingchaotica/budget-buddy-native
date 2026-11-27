@@ -1,0 +1,38 @@
+name: Idea (I-nn)
+description: One raw idea from the brain dump, before it's triaged.
+title: "I-nn (plain name)"
+labels: ["idea", "status:inbox"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: In the owner's own words.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem it solves, and for whom
+  - type: textarea
+    id: inspiration
+    attributes:
+      label: Inspiration or references
+      description: Links, sketches, screenshots.
+  - type: dropdown
+    id: triage
+    attributes:
+      label: Triage (Planner)
+      options:
+        - Not triaged yet
+        - Core (in the MVP)
+        - Later (after the MVP)
+        - Parked (kept, not planned)
+        - Dropped (reason in a comment)
+    validations:
+      required: true
+  - type: input
+    id: feeds
+    attributes:
+      label: Feeds
+      description: The feature (P-n), spec or screen issue this idea became part of.
