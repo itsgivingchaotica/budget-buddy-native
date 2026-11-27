@@ -29,10 +29,14 @@ export type Question =
   | { id: "goals"; text: string; options: Option[]; prefill: GoalAnswer[] }
   | { id: "change_appetite"; text: string; options: Option[]; prefill: Appetite };
 
+/** A bill Rails found in the imports (facts.likely_bills). */
+export type DetectedBill = { name: string; amount: string; day: number; category: string };
+
 export type OnboardingState = {
   version: number;
   step: Step;
   has_import: boolean;
+  facts: { likely_bills: DetectedBill[] };
   questions: Question[];
   answers: Record<string, unknown>;
 };

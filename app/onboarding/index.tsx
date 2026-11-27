@@ -94,6 +94,7 @@ export default function OnboardingScreen() {
           {state && step === "interview" ? (
             <InterviewStep
               questions={state.questions}
+              detectedBills={state.facts?.likely_bills ?? []}
               answers={state.answers}
               start={firstUnanswered(state.questions, state.answers)}
               today={today}

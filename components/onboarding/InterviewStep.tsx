@@ -9,13 +9,15 @@ import { Button, Chip, ErrorBox, PressableBox } from "@/components/brand/ui";
 import { Mascot } from "@/components/brand/Mascot";
 import { colors, fonts, radius } from "@/constants/Theme";
 import { amountWithoutSign } from "@/utils/format";
-import { GOAL_DATE_CHOICES, goalDateLabel, goalReady, keptBills, monthsAhead } from "@/utils/onboarding";
+import { billChoices, GOAL_DATE_CHOICES, goalDateLabel, goalReady, keptBills, monthsAhead } from "@/utils/onboarding";
 import { dayChipLabel, dayList, ordinal, parseMoneyInput } from "@/utils/plan";
 import { fixedCategories, type CategoryOption } from "@/utils/planApi";
-import type { AnswersInput, Appetite, BillAnswer, GoalAnswer, GoalKind, PayAnswer, PayFrequency, Question } from "@/utils/onboardingApi";
+import type { AnswersInput, Appetite, BillAnswer, DetectedBill, GoalAnswer, GoalKind, PayAnswer, PayFrequency, Question } from "@/utils/onboardingApi";
 
 type Props = {
   questions: Question[];
+  /** Every bill Rails found (facts.likely_bills), so removed ones can be ticked back. */
+  detectedBills: DetectedBill[];
   answers: Record<string, unknown>;
   start: number;
   today: string;
@@ -31,7 +33,7 @@ const GOAL_LABELS: Record<GoalKind, string> = {
   debt_payoff: "Pay off a debt",
 };
 
-export function InterviewStep({ questions, answers, start, today, onSave, onIndex, onDone }: Props) {
+export function InterviewStep({ questions, detectedBills, answers, start, today, onSave, onIndex, onDone }: Props) {
   const [index, setIndex] = useState(start);
   const [busy, setBusy] = useState(false);
   const q = questions[index];
@@ -39,9 +41,9 @@ export function InterviewStep({ questions, answers, start, today, onSave, onInde
   // Each question's working answer, starting from the saved answer or the prefill.
   const [pay, setPay] = useState<PayAnswer>(() => ((answers.pay as PayAnswer) ?? (questions.find((x) => x.id === "pay")?.prefill as PayAnswer)) ?? { frequency: null, next_pay_on: null, typical_amount: null });
   const [side, setSide] = useState<string | null>(() => (answers.side_income as string) ?? null);
-  const billSource = useMemo(() => ((questions.find((x) => x.id === "bills")?.prefill as BillAnswer[]) ?? []), [questions]);
-  const [bills, setBills] = useState<BillAnswer[]>(() => (answers.bills as BillAnswer[]) ?? billSource);
-  const [kept, setKept] = useState<Record<number, boolean>>({});
+  const initialBills = useMemo(() => billChoices(detectedBills, answers.bills as BillAnswer[] | undefined), [detectedBills, answers.bills]);
+  const [bills, setBills] = useState<BillAnswer[]>(initialBills.bills);
+  const [kept, setKept] = useState<Record<number, boolean>>(initialBills.kept);
   const [goals, setGoals] = useState<GoalAnswer[]>(() => (answers.goals as GoalAnswer[]) ?? []);
   const [noGoals, setNoGoals] = useState<boolean>(() => Array.isArray(answers.goals) && (answers.goals as unknown[]).length === 0);
   const [appetite, setAppetite] = useState<Appetite>(() => (answers.change_appetite as Appetite) ?? "trim");
@@ -74,12 +76,16 @@ export function InterviewStep({ questions, answers, start, today, onSave, onInde
         </View>
       </View>
 
-      {questions.slice(0, index).map((past) => (
-        <View key={past.id} style={styles.history}>
-          <Bubble text={past.text} />
-          <Bubble text={answerLabel(past, { pay, side, bills: keptBills(bills, kept), goals, noGoals, appetite })} mine />
-        </View>
-      ))}
+      {questions.slice(0, index).map((past, i) => {
+        const label = answerLabel(past, { pay, side, bills: keptBills(bills, kept), goals, noGoals, appetite });
+        return (
+          <View key={past.id} style={styles.history}>
+            <Bubble text={past.text} />
+            {/* Tap your earlier answer to change it (it's saved again with Next question). */}
+            <Bubble text={label} mine onPress={() => setIndex(i)} accessibilityLabel={`Change your answer: ${label}`} />
+          </View>
+        );
+      })}
 
       <Bubble text={q.id === "pay" && q.hint ? `${q.text} ${q.hint}` : q.text} />
 
@@ -135,7 +141,13 @@ export function answerLabel(
   }
 }
 
-function Bubble({ text, mine }: { text: string; mine?: boolean }) {
+function Bubble({ text, mine, onPress, accessibilityLabel }: { text: string; mine?: boolean; onPress?: () => void; accessibilityLabel?: string }) {
+  if (onPress)
+    return (
+      <PressableBox onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
+        <Text style={[styles.bubbleText, mine && styles.mineText]}>{text}</Text>
+      </PressableBox>
+    );
   return (
     <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
       <Text style={[styles.bubbleText, mine && styles.mineText]}>{text}</Text>

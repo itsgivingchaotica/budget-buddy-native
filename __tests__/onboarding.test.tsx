@@ -2,7 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { answerLabel } from "@/components/onboarding/InterviewStep";
 import { moreWaiting } from "@/components/onboarding/MerchantsStep";
-import { firstUnanswered, goalDateLabel, goalReady, keptBills, monthsAhead, stepNumber } from "@/utils/onboarding";
+import { billChoices, firstUnanswered, goalDateLabel, goalReady, keptBills, monthsAhead, stepNumber } from "@/utils/onboarding";
 import type { OnboardingState, Question } from "@/utils/onboardingApi";
 
 const mockOnb = { getOnboarding: jest.fn(), saveAnswers: jest.fn() };
@@ -80,7 +80,20 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-const state = (over: Partial<OnboardingState> = {}): OnboardingState => ({ version: 1, step: "accounts", has_import: true, questions: QUESTIONS, answers: {}, ...over });
+const DETECTED = [
+  { name: "OAK RENT", amount: "1850.00", day: 1, category: "rent" },
+  { name: "VERIZON", amount: "65.00", day: 12, category: "utilities" },
+];
+
+const state = (over: Partial<OnboardingState> = {}): OnboardingState => ({
+  version: 1,
+  step: "accounts",
+  has_import: true,
+  facts: { likely_bills: DETECTED },
+  questions: QUESTIONS,
+  answers: {},
+  ...over,
+});
 
 describe("onboarding helpers", () => {
   it("steps, resume point, kept bills", () => {
@@ -90,6 +103,18 @@ describe("onboarding helpers", () => {
     expect(firstUnanswered(QUESTIONS, { pay: {}, side_income: "yes", bills: [], goals: [], change_appetite: "trim" })).toBe(4);
     const bills = (QUESTIONS[2] as Extract<Question, { id: "bills" }>).prefill;
     expect(keptBills(bills, { 1: false }).map((b) => b.name)).toEqual(["OAK RENT"]);
+  });
+
+  it("the bills checklist: every bill found, removed ones unticked, added ones kept", () => {
+    expect(billChoices(DETECTED, undefined)).toEqual({ bills: DETECTED.map((b) => ({ ...b, detected: true })), kept: {} });
+    const saved = [
+      { name: "OAK RENT", amount: "1900.00", day: 1, category: "rent", detected: true },
+      { name: "Gym", amount: "30.00", day: 5, category: "utilities", detected: false },
+    ];
+    const { bills, kept } = billChoices(DETECTED, saved);
+    expect(bills.map((b) => [b.name, b.amount])).toEqual([["OAK RENT", "1900.00"], ["VERIZON", "65.00"], ["Gym", "30.00"]]);
+    expect(kept).toEqual({ 1: false });
+    expect(billChoices(DETECTED, []).kept).toEqual({ 0: false, 1: false });
   });
 
   it("goal dates and completeness", () => {
@@ -168,6 +193,27 @@ describe("Onboarding screen (C5)", () => {
     render(<OnboardingScreen />);
     expect(await screen.findByText("Question 3 of 5")).toBeTruthy();
     expect(screen.getByText("These look like regular bills. Keep the ones that are right.")).toBeTruthy();
+  });
+
+  it("tapping an earlier answer reopens it; a removed bill shows unticked and can be ticked back", async () => {
+    mockOnb.getOnboarding.mockResolvedValue(
+      state({
+        step: "interview",
+        answers: { pay: { frequency: "biweekly" }, side_income: "yes", bills: [{ ...DETECTED[0], detected: true }] },
+      })
+    );
+    render(<OnboardingScreen />);
+    expect(await screen.findByText("Question 4 of 5")).toBeTruthy();
+    fireEvent.press(screen.getByLabelText("Change your answer: Keep 1 bill"));
+    expect(screen.getByText("Question 3 of 5")).toBeTruthy();
+    const verizon = screen.getByLabelText(/VERIZON/);
+    expect(verizon.props.accessibilityState).toMatchObject({ checked: false });
+    fireEvent.press(verizon);
+    fireEvent.press(screen.getByText("Next question"));
+    await waitFor(() =>
+      expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ bills: [expect.objectContaining({ name: "OAK RENT" }), expect.objectContaining({ name: "VERIZON" })] })
+    );
+    expect(await screen.findByText("Question 4 of 5")).toBeTruthy();
   });
 
   it("a server validation message is shown and the question stays", async () => {

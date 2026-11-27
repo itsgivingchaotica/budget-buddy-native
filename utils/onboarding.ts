@@ -1,7 +1,7 @@
 // C5 (onboarding screens): pure helpers, tested. No money maths: amounts
 // are typed by the user or come from Rails.
 import { isoDay, longDay } from "@/utils/plan";
-import type { BillAnswer, GoalAnswer, Question, Step } from "@/utils/onboardingApi";
+import type { BillAnswer, DetectedBill, GoalAnswer, Question, Step } from "@/utils/onboardingApi";
 import { parseDay } from "@/utils/format";
 
 /** "Step N of 4" for a step (the draft plan is step 4). */
@@ -18,6 +18,23 @@ export function firstUnanswered(questions: Question[], answers: Record<string, u
 /** Bills the user ticked (the prefill list with their choices). */
 export function keptBills(bills: BillAnswer[], kept: Record<number, boolean>): BillAnswer[] {
   return bills.filter((_, i) => kept[i] !== false);
+}
+
+/**
+ * The bills question's checklist: every bill Rails found, plus any the user
+ * added, with the saved choices. A found bill missing from the saved answer
+ * is shown unticked (so it can be ticked back); before any answer, all are ticked.
+ */
+export function billChoices(detected: DetectedBill[], saved: BillAnswer[] | undefined): { bills: BillAnswer[]; kept: Record<number, boolean> } {
+  const found: BillAnswer[] = detected.map((b) => ({ ...b, detected: true }));
+  if (!saved) return { bills: found, kept: {} };
+  const savedFound = (b: BillAnswer) => saved.find((s) => s.detected !== false && s.name === b.name);
+  const bills = [...found.map((b) => savedFound(b) ?? b), ...saved.filter((s) => !found.some((f) => f.name === s.name))];
+  const kept: Record<number, boolean> = {};
+  bills.forEach((b, i) => {
+    if (i < found.length && !savedFound(found[i])) kept[i] = false;
+  });
+  return { bills, kept };
 }
 
 /** A goal's target date `months` ahead, on the last day of that month ("by the end of June"). */
