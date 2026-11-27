@@ -1,0 +1,25 @@
+name: Question (Q-nn / PO-nn)
+description: An open question. Q-nn comes from the Planner; PO-nn comes from the Builder for the owner.
+title: "Q-nn (plain name)"
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: textarea
+    id: blocks
+    attributes:
+      label: Why it matters / what it blocks
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and recommendation
+    validations:
+      required: true
+  - type: textarea
+    id: answer
+    attributes:
+      label: Answer (owner, date)

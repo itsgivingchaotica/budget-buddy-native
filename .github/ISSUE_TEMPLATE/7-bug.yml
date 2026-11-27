@@ -1,0 +1,39 @@
+name: Bug / known issue (K-n)
+description: Something that doesn't match its spec. Use synthetic data only.
+title: "K-n (plain name)"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+      description: Cite the spec section if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Synthetic data only. No real names, amounts or personal details.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical (data loss, security, wrong figure shown)
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: input
+    id: fix
+    attributes:
+      label: Fix in
+      placeholder: "Task # or its own fix/ PR"

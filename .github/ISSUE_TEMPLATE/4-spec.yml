@@ -1,0 +1,38 @@
+name: Spec review
+description: Tracks one feature spec from draft to approval. Approval = its docs PR is merged.
+title: "SPEC: <feature> (P-n)"
+labels: ["spec", "status:shaping"]
+body:
+  - type: input
+    id: doc
+    attributes:
+      label: Doc
+      value: "docs/product/SPEC_<FEATURE>.md"
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Traceability
+      value: |
+        Feature: P-n #
+        Ideas: I-nn #
+        Decisions: D-0nn #
+        Screens: #
+  - type: checkboxes
+    id: review
+    attributes:
+      label: Review checklist
+      options:
+        - label: Definitions are precise
+        - label: Edge cases and every state are covered
+        - label: API contract is complete
+        - label: Worked examples are hand-calculated (they are the acceptance tests)
+        - label: AI feature contract is included (if it uses a model)
+        - label: Level notes (what changes at L+1)
+        - label: Feasibility checked against the backend shape
+        - label: All open choices answered by the owner
+  - type: textarea
+    id: notes
+    attributes:
+      label: Review notes
