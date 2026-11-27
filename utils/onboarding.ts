@@ -37,6 +37,20 @@ export function billChoices(detected: DetectedBill[], saved: BillAnswer[] | unde
   return { bills, kept };
 }
 
+/** ON2: the first follow-up without a saved answer, or -1 when all are answered. */
+export function nextFollowUp(followUps: { slot: string }[], saved: Record<string, unknown> | undefined): number {
+  return followUps.findIndex((f) => saved?.[f.slot] === undefined);
+}
+
+/** Move goal `from` one place up (-1) or down (+1) in an order list. */
+export function moveInOrder(order: number[], from: number, by: -1 | 1): number[] {
+  const to = from + by;
+  if (to < 0 || to >= order.length) return order;
+  const next = [...order];
+  [next[from], next[to]] = [next[to], next[from]];
+  return next;
+}
+
 /** A goal's target date `months` ahead, on the last day of that month ("by the end of June"). */
 export function monthsAhead(today: string, months: number): string {
   const t = parseDay(today);
