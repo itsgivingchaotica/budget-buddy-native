@@ -2,14 +2,15 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { answerLabel } from "@/components/onboarding/InterviewStep";
 import { moreWaiting } from "@/components/onboarding/MerchantsStep";
-import { billChoices, firstUnanswered, goalDateLabel, goalReady, keptBills, monthsAhead, stepNumber } from "@/utils/onboarding";
+import { billChoices, firstUnanswered, moveInOrder, nextFollowUp, goalDateLabel, goalReady, keptBills, monthsAhead, stepNumber } from "@/utils/onboarding";
 import type { OnboardingState, Question } from "@/utils/onboardingApi";
 
-const mockOnb = { getOnboarding: jest.fn(), saveAnswers: jest.fn() };
+const mockOnb = { getOnboarding: jest.fn(), saveAnswers: jest.fn(), getFollowUps: jest.fn() };
 const mockAct = { listAccounts: jest.fn(), reviewGroups: jest.fn(), listCategories: jest.fn(), pickCategory: jest.fn(), undoCorrection: jest.fn() };
 jest.mock("@/utils/onboardingApi", () => ({
   getOnboarding: (...a: unknown[]) => mockOnb.getOnboarding(...a),
   saveAnswers: (...a: unknown[]) => mockOnb.saveAnswers(...a),
+  getFollowUps: (...a: unknown[]) => mockOnb.getFollowUps(...a),
 }));
 jest.mock("@/utils/activityApi", () => ({
   listAccounts: (...a: unknown[]) => mockAct.listAccounts(...a),
@@ -91,6 +92,7 @@ const state = (over: Partial<OnboardingState> = {}): OnboardingState => ({
   has_import: true,
   facts: { likely_bills: DETECTED },
   questions: QUESTIONS,
+  follow_ups: null,
   answers: {},
   ...over,
 });
@@ -144,7 +146,18 @@ describe("Onboarding screen (C5)", () => {
       { id: 3, name: "Venmo", kind: "p2p", purpose: "side_income", purpose_note: null, archived_at: null, data_through: null, transaction_count: 0 },
     ]);
     mockOnb.saveAnswers.mockImplementation(async (input: { step?: string }) => state({ step: (input.step as never) ?? "interview" }));
+    mockOnb.getFollowUps.mockResolvedValue([]);
+    mockAct.reviewGroups.mockResolvedValue({ groups: [], remaining: 0 });
+    mockAct.listCategories.mockResolvedValue([]);
   });
+
+  // Step 3 loads its review groups after it appears; wait for that, so no
+  // screen update lands after the test ends (React's act() warning).
+  const step3Loaded = async () => {
+    expect(await screen.findByText("A few I wasn't sure about")).toBeTruthy();
+    await waitFor(() => expect(mockAct.listCategories).toHaveBeenCalled());
+    await act(async () => undefined);
+  };
 
   it("step 1: accounts with their import state; Upload opens Import; Continue saves the step", async () => {
     mockOnb.getOnboarding.mockResolvedValue(state());
@@ -156,6 +169,7 @@ describe("Onboarding screen (C5)", () => {
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: "/activity/import", params: { accountId: "3" } });
     fireEvent.press(screen.getByText("Continue"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ step: "interview" }));
+    expect(await screen.findByText("Question 1 of 5")).toBeTruthy();
   });
 
   it("step 1: Continue waits for an import", async () => {
@@ -186,6 +200,7 @@ describe("Onboarding screen (C5)", () => {
     fireEvent.press(screen.getByText("Done"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ change_appetite: "push" }));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
   });
 
   it("step 2 resumes at the first unanswered question", async () => {
@@ -245,6 +260,74 @@ describe("Onboarding screen (C5)", () => {
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "plan" }));
     expect(await screen.findByText("Your answers are saved")).toBeTruthy();
     await act(async () => undefined);
+  });
+
+  it("ON2: follow-ups after question 5, each answer saved, then step 3", async () => {
+    const all = { pay: { frequency: "biweekly" }, side_income: "yes", bills: [], goals: [{ kind: "purchase", name: "Bike" }, { kind: "emergency_fund" }], change_appetite: "trim" };
+    mockOnb.getOnboarding.mockResolvedValue(state({ step: "interview", answers: all }));
+    mockOnb.getFollowUps.mockResolvedValue([
+      { slot: "side_income_use", question: "Where should your side income go?", input: "choice", options: [{ value: "goals", label: "Toward goals" }, { value: "both", label: "Both" }] },
+      { slot: "goal_priority", question: "Which goal comes first?", input: "order", goals: [{ index: 0, name: "Bike" }, { index: 1, name: "Emergency fund" }] },
+    ]);
+    render(<OnboardingScreen />);
+    fireEvent.press(await screen.findByText("Done")); // question 5 (resumed there, all answered)
+    expect(await screen.findByText("Where should your side income go?")).toBeTruthy();
+    expect(screen.getByText("A couple more · 1 of 2")).toBeTruthy();
+    fireEvent.press(screen.getByText("Both"));
+    fireEvent.press(screen.getByText("Next"));
+    await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ follow_ups: { side_income_use: "both" } }));
+    expect(await screen.findByText("Which goal comes first?")).toBeTruthy();
+    fireEvent.press(screen.getByLabelText("Move Emergency fund up"));
+    fireEvent.press(screen.getByText("Done"));
+    await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ follow_ups: { goal_priority: [1, 0] } }));
+    await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
+  });
+
+  it("ON2: no follow-ups, or an error asking for them → straight on to step 3, no message", async () => {
+    const all = { pay: { frequency: "biweekly" }, side_income: "yes", bills: [], goals: [], change_appetite: "trim" };
+    mockOnb.getOnboarding.mockResolvedValue(state({ step: "interview", answers: all }));
+    mockOnb.getFollowUps.mockRejectedValueOnce(new Error("offline"));
+    render(<OnboardingScreen />);
+    fireEvent.press(await screen.findByText("Done"));
+    await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
+    expect(screen.queryByText(/Couldn't/)).toBeNull();
+  });
+
+  it("ON2: resumes at the first unanswered follow-up", async () => {
+    const all = { pay: { frequency: "biweekly" }, side_income: "yes", bills: [], goals: [], change_appetite: "trim", follow_ups: { side_income_use: "both" } };
+    const asked = [
+      { slot: "side_income_use", question: "Where should your side income go?", input: "choice", options: [{ value: "both", label: "Both" }] },
+      { slot: "irregular_income_floor", question: "What can you count on each month?", input: "amount", label: "A month I can count on" },
+    ];
+    mockOnb.getOnboarding.mockResolvedValue(state({ step: "interview", answers: all, follow_ups: asked as never }));
+    render(<OnboardingScreen />);
+    expect(await screen.findByText("What can you count on each month?")).toBeTruthy();
+    fireEvent.changeText(screen.getByLabelText("A month I can count on"), "1800");
+    fireEvent.press(screen.getByText("Done"));
+    await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ follow_ups: { irregular_income_floor: "1800.00" } }));
+    await step3Loaded();
+  });
+
+  it("ON2: a rejected follow-up answer shows the message and the question stays", async () => {
+    const all = { pay: { frequency: "irregular" }, side_income: "no", bills: [], goals: [], change_appetite: "trim" };
+    const asked = [{ slot: "irregular_income_floor", question: "What can you count on each month?", input: "amount", label: "A month I can count on" }];
+    mockOnb.getOnboarding.mockResolvedValue(state({ step: "interview", answers: all, follow_ups: asked as never }));
+    mockOnb.saveAnswers.mockRejectedValueOnce({ response: { data: { errors: { follow_ups: ["irregular_income_floor: must be an amount of 0 or more"] } } } });
+    render(<OnboardingScreen />);
+    fireEvent.changeText(await screen.findByLabelText("A month I can count on"), "1800");
+    fireEvent.press(screen.getByText("Done"));
+    expect(await screen.findByText("irregular_income_floor: must be an amount of 0 or more")).toBeTruthy();
+    expect(screen.getByText("What can you count on each month?")).toBeTruthy();
+    expect(mockOnb.saveAnswers).not.toHaveBeenCalledWith({ step: "merchants" });
+  });
+
+  it("follow-up helpers", () => {
+    expect(nextFollowUp([{ slot: "a" }, { slot: "b" }], { a: "x" })).toBe(1);
+    expect(nextFollowUp([{ slot: "a" }], { a: "x" })).toBe(-1);
+    expect(moveInOrder([0, 1, 2], 2, -1)).toEqual([0, 2, 1]);
+    expect(moveInOrder([0, 1, 2], 0, -1)).toEqual([0, 1, 2]);
   });
 
   it("Later leaves onboarding", async () => {

@@ -32,12 +32,22 @@ export type Question =
 /** A bill Rails found in the imports (facts.likely_bills). */
 export type DetectedBill = { name: string; amount: string; day: number; category: string };
 
+/** ON2: a coach follow-up, worded by the model, with options from Rails. */
+export type FollowUp =
+  | { slot: string; question: string; input: "choice"; options: Option[]; category?: { slug: string; name: string } }
+  | { slot: "irregular_income_floor"; question: string; input: "amount"; label: string }
+  | { slot: "goal_priority"; question: string; input: "order"; goals: { index: number; name: string }[] };
+
+export type FollowUpAnswer = string | number[];
+
 export type OnboardingState = {
   version: number;
   step: Step;
   has_import: boolean;
   facts: { likely_bills: DetectedBill[] };
   questions: Question[];
+  /** ON2: the follow-ups already asked (null until asked). */
+  follow_ups: FollowUp[] | null;
   answers: Record<string, unknown>;
 };
 
@@ -48,11 +58,18 @@ export type AnswersInput = {
   bills?: BillAnswer[];
   goals?: GoalAnswer[];
   change_appetite?: Appetite;
+  follow_ups?: Record<string, FollowUpAnswer>;
 };
 
 export async function getOnboarding(): Promise<OnboardingState> {
   const { data } = await api.get<OnboardingState>("/onboarding");
   return data;
+}
+
+/** ON2: asks for (or returns the stored) coach follow-ups; [] when there are none or the AI is unavailable. */
+export async function getFollowUps(): Promise<FollowUp[]> {
+  const { data } = await api.post<{ follow_ups: FollowUp[] }>("/onboarding/follow_ups");
+  return data.follow_ups;
 }
 
 /** Saves a partial answer (and/or the step); returns the updated state. */
