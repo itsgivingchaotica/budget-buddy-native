@@ -147,7 +147,17 @@ describe("Onboarding screen (C5)", () => {
     ]);
     mockOnb.saveAnswers.mockImplementation(async (input: { step?: string }) => state({ step: (input.step as never) ?? "interview" }));
     mockOnb.getFollowUps.mockResolvedValue([]);
+    mockAct.reviewGroups.mockResolvedValue({ groups: [], remaining: 0 });
+    mockAct.listCategories.mockResolvedValue([]);
   });
+
+  // Step 3 loads its review groups after it appears; wait for that, so no
+  // screen update lands after the test ends (React's act() warning).
+  const step3Loaded = async () => {
+    expect(await screen.findByText("A few I wasn't sure about")).toBeTruthy();
+    await waitFor(() => expect(mockAct.listCategories).toHaveBeenCalled());
+    await act(async () => undefined);
+  };
 
   it("step 1: accounts with their import state; Upload opens Import; Continue saves the step", async () => {
     mockOnb.getOnboarding.mockResolvedValue(state());
@@ -159,6 +169,7 @@ describe("Onboarding screen (C5)", () => {
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: "/activity/import", params: { accountId: "3" } });
     fireEvent.press(screen.getByText("Continue"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ step: "interview" }));
+    expect(await screen.findByText("Question 1 of 5")).toBeTruthy();
   });
 
   it("step 1: Continue waits for an import", async () => {
@@ -189,6 +200,7 @@ describe("Onboarding screen (C5)", () => {
     fireEvent.press(screen.getByText("Done"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ change_appetite: "push" }));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
   });
 
   it("step 2 resumes at the first unanswered question", async () => {
@@ -269,6 +281,7 @@ describe("Onboarding screen (C5)", () => {
     fireEvent.press(screen.getByText("Done"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ follow_ups: { goal_priority: [1, 0] } }));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
   });
 
   it("ON2: no follow-ups, or an error asking for them → straight on to step 3, no message", async () => {
@@ -278,6 +291,7 @@ describe("Onboarding screen (C5)", () => {
     render(<OnboardingScreen />);
     fireEvent.press(await screen.findByText("Done"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenLastCalledWith({ step: "merchants" }));
+    await step3Loaded();
     expect(screen.queryByText(/Couldn't/)).toBeNull();
   });
 
@@ -293,6 +307,7 @@ describe("Onboarding screen (C5)", () => {
     fireEvent.changeText(screen.getByLabelText("A month I can count on"), "1800");
     fireEvent.press(screen.getByText("Done"));
     await waitFor(() => expect(mockOnb.saveAnswers).toHaveBeenCalledWith({ follow_ups: { irregular_income_floor: "1800.00" } }));
+    await step3Loaded();
   });
 
   it("ON2: a rejected follow-up answer shows the message and the question stays", async () => {
