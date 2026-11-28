@@ -8,6 +8,8 @@ The Expo / React Native app for Budget Buddy. **Everything shared lives in the s
 
 ## Client specifics
 
+- **The Builder keeps the issue checklists current** (same rule as the server). Tick each box on the task issue as soon as it's verified, with a one-line proof comment (test, CI run, commit). Never tick the owner-only items (understanding check, phone test, screenshots) until the owner has done them. Before asking the owner to merge, every box is ticked or explained.
+- **End every report that needs the owner with an "Owner action needed" block:** what to do, where, what to reply, and which boxes it unlocks. The owner shouldn't have to go looking.
 - **npm only** (`npm install`, `npm ci`): the Kinde SDK relies on npm `overrides` to share the app's Expo modules.
 - **TypeScript baseline:** `npm run tsc:check` must stay at or below the recorded count (48), in total and per file.
 - **Tests:** `npm run test:ci`. Keep test files out of `app/` (Expo Router turns them into routes); use `__tests__/` or `utils/__tests__/`.
